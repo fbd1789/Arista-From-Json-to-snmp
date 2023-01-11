@@ -20,8 +20,8 @@ const (
 	InconsistentValue
 )
 
-func (d SetError) String() string {
-	switch d {
+func (e SetError) String() string {
+	switch e {
 	case NotWriteable:
 		return "not-writable"
 	case WrongType:
@@ -33,7 +33,7 @@ func (d SetError) String() string {
 	case InconsistentValue:
 		return "inconsistent-value"
 	default:
-		log.Fatal().Msgf("unknown value type id: %d", d)
+		log.Fatal().Msgf("unknown value type id: %d", e)
 	}
 	return ""
 }
@@ -73,9 +73,7 @@ func (o OID) Prepend(oid OID) OID {
 }
 
 func (o OID) Append(oid OID) OID {
-	// var new OID
-	new := append(o, oid...)
-	return new
+	return append(o, oid...)
 }
 
 func (o OID) String() string {
@@ -109,7 +107,6 @@ type typedValue struct {
 
 func (v *typedValue) String() string {
 
-	//fmt.Printf("VAL: %T %+v\n", value, value)
 	switch v.GetValue().(type) {
 	case *StringVal:
 		return v.GetStringVal()

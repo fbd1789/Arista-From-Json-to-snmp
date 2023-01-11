@@ -236,7 +236,7 @@ func watchStdin(ctx context.Context, input chan<- string, done chan<- bool) {
 			log.Debug().Msg("ctx done")
 		default:
 			line := scanner.Text()
-			//log.Debug().Msgf("Got user input: %s", line)
+			log.Debug().Msgf("Got user input: %s", line)
 			input <- line
 		}
 	}
