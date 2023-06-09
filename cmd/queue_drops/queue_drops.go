@@ -43,10 +43,10 @@ type Interface struct {
 }
 
 type Counters struct {
-	EnqueuedBytes   int64 `json:"enqueuedBytes"`
-	EnqueuedPackets int64 `json:"enqueuedPackets"`
-	DroppedBytes    int64 `json:"droppedBytes"`
-	DroppedPackets  int64 `json:"droppedPackets"`
+	EnqueuedBytes   uint64 `json:"enqueuedBytes"`
+	EnqueuedPackets uint64 `json:"enqueuedPackets"`
+	DroppedBytes    uint64 `json:"droppedBytes"`
+	DroppedPackets  uint64 `json:"droppedPackets"`
 }
 
 func eosCommand(command string) []string {

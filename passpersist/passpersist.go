@@ -71,7 +71,7 @@ func (p *PassPersist) AddString(subs []int, value string) error {
 	return p.AddEntry(subs, typedValue{Value: &StringVal{Value: value}})
 }
 
-func (p *PassPersist) AddInt(subs []int, value int) error {
+func (p *PassPersist) AddInt(subs []int, value int32) error {
 	return p.AddEntry(subs, typedValue{Value: &IntVal{Value: value}})
 }
 
@@ -87,15 +87,15 @@ func (p *PassPersist) AddIP(subs []int, ip net.IP) error {
 	return nil
 }
 
-func (p *PassPersist) AddCounter32(subs []int, value int32) error {
+func (p *PassPersist) AddCounter32(subs []int, value uint32) error {
 	return p.AddEntry(subs, typedValue{Value: &Counter32Val{Value: value}})
 }
 
-func (p *PassPersist) AddCounter64(subs []int, value int64) error {
+func (p *PassPersist) AddCounter64(subs []int, value uint64) error {
 	return p.AddEntry(subs, typedValue{Value: &Counter64Val{Value: value}})
 }
 
-func (p *PassPersist) AddGauge(subs []int, value int) error {
+func (p *PassPersist) AddGauge(subs []int, value uint32) error {
 	return p.AddEntry(subs, typedValue{Value: &GaugeVal{Value: value}})
 }
 
