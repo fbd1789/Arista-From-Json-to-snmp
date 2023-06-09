@@ -16,10 +16,10 @@ func NewCache() *Cache {
 }
 
 type Cache struct {
+	sync.RWMutex
 	staged    map[string]*VarBind
 	committed map[string]*VarBind
 	index     Oids
-	mu        sync.RWMutex
 }
 
 func (c *Cache) getIndex(o *Oid) int {
@@ -100,26 +100,12 @@ func (c *Cache) GetNext(oid *Oid) *VarBind {
 }
 
 func (c *Cache) Set(v *VarBind) error {
+	c.Lock()
+	defer c.Unlock()
 
 	log.Debug().Msgf("staging: %s %s %v", v.Oid, v.ValueType, v.Value)
 
 	c.staged[v.Oid.String()] = v
 
 	return nil
-}
-
-func (c *Cache) Lock() {
-	c.mu.Lock()
-}
-
-func (c *Cache) RLock() {
-	c.mu.RLock()
-}
-
-func (c *Cache) Unlock() {
-	c.mu.Unlock()
-}
-
-func (c *Cache) RUnlock() {
-	c.mu.RUnlock()
 }

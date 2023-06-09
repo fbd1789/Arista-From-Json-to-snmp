@@ -1,124 +1,12 @@
 package passpersist
 
 import (
-	"fmt"
 	"net"
 	"strconv"
 	"time"
 
 	"github.com/rs/zerolog/log"
 )
-
-type SetError int
-
-const (
-	NotWriteable SetError = iota
-	WrongType
-	WrongValue
-	WrongLength
-	InconsistentValue
-)
-
-func (e SetError) String() string {
-	switch e {
-	case NotWriteable:
-		return "not-writable"
-	case WrongType:
-		return "wrong-type"
-	case WrongValue:
-		return "wrong-value"
-	case WrongLength:
-		return "wrong-length"
-	case InconsistentValue:
-		return "inconsistent-value"
-	default:
-		log.Fatal().Msgf("unknown value type id: %d", e)
-	}
-	return ""
-}
-
-// type OID struct {
-// 	Value asn1.ObjectIdentifier
-// }
-
-// func NewOid(s string) (*OID, error) {
-// 	var err error
-// 	subs := strings.Split(s, ".")
-
-// 	// remove leading dot
-// 	if subs[0] == "" {
-// 		subs = subs[1:]
-// 	}
-
-// 	if len(subs) > 128 {
-// 		return nil, errors.New("oid too long, maxuimum 128")
-// 	}
-
-// 	o := make(asn1.ObjectIdentifier, len(subs))
-// 	for i, v := range subs {
-// 		o[i], err = strconv.Atoi(v)
-// 		if err != nil || o[i] < 0 || int64(o[i]) > math.MaxUint32 {
-// 			return nil, errors.New("oid out of range.")
-// 		}
-// 	}
-
-// 	return &OID{o}, nil
-// }
-
-// func (o OID) HasPrefix(oid OID) bool {
-// 	if len(oid.Value) > len(o.Value) {
-// 		return false
-// 	}
-// 	prefix := o.Value[0:len(oid.Value)]
-
-// 	return prefix.Equal(oid.Value)
-// }
-
-// func (o OID) Equal(oid OID) bool {
-// 	if len(o.Value) != len(oid.Value) {
-// 		return false
-// 	}
-// 	for i, v := range o.Value {
-// 		if v != oid.Value[i] {
-// 			return false
-// 		}
-// 	}
-// 	return true
-// }
-
-// func (o OID) Pop(oid OID) OID {
-// 	if o.HasPrefix(oid) {
-// 		return OID{o.Value[len(oid.Value):]}
-// 	}
-// 	return OID{}
-// }
-
-// func (o OID) Prepend(oid OID) OID {
-// 	return OID{append(oid.Value, o.Value...)}
-// }
-
-// func (o OID) Append(oid OID) OID {
-// 	return OID{append(o.Value, oid.Value...)}
-// }
-
-// func (o OID) String() string {
-// 	return o.Value.String()
-// }
-
-type VarBind struct {
-	Oid       *Oid       `json:"oid"`
-	ValueType string     `json:"type"`
-	Value     typedValue `json:"value"`
-}
-
-func (r *VarBind) String() string {
-	return fmt.Sprintf("%s, %s, %v", r.Oid, r.Value.TypeString(), r.Value)
-}
-
-func (r *VarBind) Marshal() string {
-
-	return fmt.Sprintf("%s\n%s\n%s", r.Oid, r.Value.TypeString(), r.Value.String())
-}
 
 type typedValue struct {
 	Value isTypedValue

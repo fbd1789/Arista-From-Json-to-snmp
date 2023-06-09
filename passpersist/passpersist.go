@@ -23,6 +23,49 @@ func init() {
 	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr, TimeFormat: time.RFC3339})
 }
 
+type SetError int
+
+const (
+	NotWriteable SetError = iota
+	WrongType
+	WrongValue
+	WrongLength
+	InconsistentValue
+)
+
+func (e SetError) String() string {
+	switch e {
+	case NotWriteable:
+		return "not-writable"
+	case WrongType:
+		return "wrong-type"
+	case WrongValue:
+		return "wrong-value"
+	case WrongLength:
+		return "wrong-length"
+	case InconsistentValue:
+		return "inconsistent-value"
+	default:
+		log.Fatal().Msgf("unknown value type id: %d", e)
+	}
+	return ""
+}
+
+type VarBind struct {
+	Oid       *Oid       `json:"oid"`
+	ValueType string     `json:"type"`
+	Value     typedValue `json:"value"`
+}
+
+func (r *VarBind) String() string {
+	return fmt.Sprintf("%s, %s, %v", r.Oid, r.Value.TypeString(), r.Value)
+}
+
+func (r *VarBind) Marshal() string {
+
+	return fmt.Sprintf("%s\n%s\n%s", r.Oid, r.Value.TypeString(), r.Value.String())
+}
+
 type PassPersist struct {
 	baseOid *Oid
 	refresh time.Duration
@@ -67,40 +110,40 @@ func (p *PassPersist) AddEntry(subs []int, value typedValue) error {
 	return nil
 }
 
-func (p *PassPersist) AddString(subs []int, value string) error {
-	return p.AddEntry(subs, typedValue{Value: &StringVal{Value: value}})
+func (p *PassPersist) AddString(subIds []int, value string) error {
+	return p.AddEntry(subIds, typedValue{&StringVal{value}})
 }
 
-func (p *PassPersist) AddInt(subs []int, value int32) error {
-	return p.AddEntry(subs, typedValue{Value: &IntVal{Value: value}})
+func (p *PassPersist) AddInt(subIds []int, value int32) error {
+	return p.AddEntry(subIds, typedValue{&IntVal{value}})
 }
 
-func (p *PassPersist) AddOID(subs []int, value Oid) error {
-	return nil
+func (p *PassPersist) AddOID(subIds []int, value Oid) error {
+	return p.AddEntry(subIds, typedValue{&OIDVal{value}})
 }
 
-func (p *PassPersist) AddOctetString(subs []int, value []byte) error {
-	return nil
+func (p *PassPersist) AddOctetString(subIds []int, value []byte) error {
+	return p.AddEntry(subIds, typedValue{&OctetStringVal{value}})
 }
 
-func (p *PassPersist) AddIP(subs []int, ip net.IP) error {
-	return nil
+func (p *PassPersist) AddIP(subIds []int, value net.IP) error {
+	return p.AddEntry(subIds, typedValue{&IPAddrVal{value}})
 }
 
-func (p *PassPersist) AddCounter32(subs []int, value uint32) error {
-	return p.AddEntry(subs, typedValue{Value: &Counter32Val{Value: value}})
+func (p *PassPersist) AddCounter32(subIds []int, value uint32) error {
+	return p.AddEntry(subIds, typedValue{&Counter32Val{value}})
 }
 
-func (p *PassPersist) AddCounter64(subs []int, value uint64) error {
-	return p.AddEntry(subs, typedValue{Value: &Counter64Val{Value: value}})
+func (p *PassPersist) AddCounter64(subIds []int, value uint64) error {
+	return p.AddEntry(subIds, typedValue{&Counter64Val{value}})
 }
 
-func (p *PassPersist) AddGauge(subs []int, value uint32) error {
-	return p.AddEntry(subs, typedValue{Value: &GaugeVal{Value: value}})
+func (p *PassPersist) AddGauge(subIds []int, value uint32) error {
+	return p.AddEntry(subIds, typedValue{&GaugeVal{value}})
 }
 
-func (p *PassPersist) AddTimeTicks(subs []int, value time.Duration) error {
-	return nil
+func (p *PassPersist) AddTimeTicks(subIds []int, value time.Duration) error {
+	return p.AddEntry(subIds, typedValue{&TimeTicksVal{value}})
 }
 
 func (p *PassPersist) Dump() {
@@ -220,7 +263,7 @@ func watchStdin(ctx context.Context, input chan<- string, done chan<- bool) {
 
 		select {
 		case <-ctx.Done():
-			log.Debug().Msg("ctx done")
+			return
 		default:
 			line := scanner.Text()
 			log.Debug().Msgf("Got user input: %s", line)
@@ -237,8 +280,14 @@ func watchStdin(ctx context.Context, input chan<- string, done chan<- bool) {
 
 func (p *PassPersist) convertAndValidateOid(oid string) (*Oid, bool) {
 	o, err := NewOid(oid)
+
 	if err != nil {
 		return nil, false
 	}
+
+	if !o.Contains(p.baseOid) {
+		return o, false
+	}
+
 	return o, true
 }
