@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"net"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/rs/zerolog/log"
@@ -38,56 +37,76 @@ func (e SetError) String() string {
 	return ""
 }
 
-type OID []int
+// type OID struct {
+// 	Value asn1.ObjectIdentifier
+// }
 
-func (o OID) HasPrefix(oid OID) bool {
-	if len(oid) > len(o) {
-		return false
-	}
-	prefix := o[0:len(oid)]
+// func NewOid(s string) (*OID, error) {
+// 	var err error
+// 	subs := strings.Split(s, ".")
 
-	return prefix.Equal(oid)
-}
+// 	// remove leading dot
+// 	if subs[0] == "" {
+// 		subs = subs[1:]
+// 	}
 
-func (o OID) Equal(oid OID) bool {
-	if len(o) != len(oid) {
-		return false
-	}
-	for i, v := range o {
-		if v != oid[i] {
-			return false
-		}
-	}
-	return true
-}
+// 	if len(subs) > 128 {
+// 		return nil, errors.New("oid too long, maxuimum 128")
+// 	}
 
-func (o OID) Pop(oid OID) OID {
-	if o.HasPrefix(oid) {
-		return o[len(oid):]
-	}
-	return nil
-}
+// 	o := make(asn1.ObjectIdentifier, len(subs))
+// 	for i, v := range subs {
+// 		o[i], err = strconv.Atoi(v)
+// 		if err != nil || o[i] < 0 || int64(o[i]) > math.MaxUint32 {
+// 			return nil, errors.New("oid out of range.")
+// 		}
+// 	}
 
-func (o OID) Prepend(oid OID) OID {
-	return append(oid, o...)
-}
+// 	return &OID{o}, nil
+// }
 
-func (o OID) Append(oid OID) OID {
-	return append(o, oid...)
-}
+// func (o OID) HasPrefix(oid OID) bool {
+// 	if len(oid.Value) > len(o.Value) {
+// 		return false
+// 	}
+// 	prefix := o.Value[0:len(oid.Value)]
 
-func (o OID) String() string {
-	parts := make([]string, 0)
-	for _, p := range o {
-		parts = append(parts, strconv.Itoa(p))
-	}
-	s := strings.Join(parts, ".")
+// 	return prefix.Equal(oid.Value)
+// }
 
-	return s
-}
+// func (o OID) Equal(oid OID) bool {
+// 	if len(o.Value) != len(oid.Value) {
+// 		return false
+// 	}
+// 	for i, v := range o.Value {
+// 		if v != oid.Value[i] {
+// 			return false
+// 		}
+// 	}
+// 	return true
+// }
+
+// func (o OID) Pop(oid OID) OID {
+// 	if o.HasPrefix(oid) {
+// 		return OID{o.Value[len(oid.Value):]}
+// 	}
+// 	return OID{}
+// }
+
+// func (o OID) Prepend(oid OID) OID {
+// 	return OID{append(oid.Value, o.Value...)}
+// }
+
+// func (o OID) Append(oid OID) OID {
+// 	return OID{append(o.Value, oid.Value...)}
+// }
+
+// func (o OID) String() string {
+// 	return o.Value.String()
+// }
 
 type VarBind struct {
-	Oid       OID        `json:"oid"`
+	Oid       *Oid       `json:"oid"`
 	ValueType string     `json:"type"`
 	Value     typedValue `json:"value"`
 }
@@ -111,7 +130,6 @@ func (v *typedValue) String() string {
 	case *StringVal:
 		return v.GetStringVal()
 	case *IntVal:
-		fmt.Println("INTVAL")
 		return strconv.Itoa(v.GetIntVal())
 	case *Counter32Val:
 		return strconv.Itoa(int(v.GetCouter32Val()))
@@ -124,7 +142,8 @@ func (v *typedValue) String() string {
 	case *IPVal:
 		return v.GetIPVal().String()
 	case *OIDVal:
-		return v.GetOIDVal().String()
+		o := v.GetOIDVal()
+		return o.String()
 	case *TimeTicksVal:
 		return v.GetTimeTicksVal().String()
 	default:
@@ -207,11 +226,11 @@ func (v *typedValue) GetOctetStringVal() []byte {
 	return []byte{}
 }
 
-func (v *typedValue) GetOIDVal() OID {
+func (v *typedValue) GetOIDVal() Oid {
 	if x, ok := v.GetValue().(*OIDVal); ok {
 		return x.Value
 	}
-	return OID{}
+	return Oid{}
 }
 
 func (v *typedValue) GetStringVal() string {
@@ -255,7 +274,7 @@ type OctetStringVal struct {
 }
 
 type OIDVal struct {
-	Value OID
+	Value Oid
 }
 
 type StringVal struct {

@@ -18,32 +18,14 @@ func init() {
 func setDefaults() {
 	Config.Refresh = DEFAULT_REFRESH
 	Config.LogLevel = DEFAULT_LOG_LEVEL
-	Config.BaseOid, _ = OIDFromString(DEFAULT_BASE_OID)
+	Config.BaseOid = MustNewOid(DEFAULT_BASE_OID)
 
 }
-
-// func FlagInit() {
-// 	var err error
-
-// 	flag.DurationVar(&Config.Refresh, "refresh", DEFAULT_REFRESH, "refresh timer")
-// 	flag.IntVar(&Config.LogLevel, "level", DEFAULT_LOG_LEVEL, "logging level (-1 - 5)")
-
-// 	var baseOid OID
-// 	o := flag.String("base-oid", DEFAULT_BASE_OID, "base OID")
-
-// 	baseOid, err = OIDFromString(*o)
-// 	if err != nil {
-// 		log.Fatal().Msgf("invalid OID: '%s'", *o)
-// 	}
-// 	Config.BaseOid = baseOid
-
-// 	flag.Parse()
-// }
 
 var Config ConfigT
 
 type ConfigT struct {
-	BaseOid  OID
+	BaseOid  *Oid
 	Refresh  time.Duration
 	LogLevel int
 }

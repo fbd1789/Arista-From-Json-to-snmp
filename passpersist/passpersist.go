@@ -8,8 +8,6 @@ import (
 	"io"
 	"net"
 	"runtime"
-	"strconv"
-	"strings"
 	"time"
 
 	"os"
@@ -25,24 +23,8 @@ func init() {
 	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr, TimeFormat: time.RFC3339})
 }
 
-func OIDFromString(oid string) (OID, error) {
-
-	split := strings.Split(strings.Trim(oid, "."), ".")
-
-	var new OID = make([]int, len(split))
-
-	for i, p := range split {
-		n, err := strconv.Atoi(p)
-		if err != nil {
-			return nil, fmt.Errorf("invalid oid: '%s'", oid)
-		}
-		new[i] = n
-	}
-	return new, nil
-}
-
 type PassPersist struct {
-	baseOid OID
+	baseOid *Oid
 	refresh time.Duration
 	cache   *Cache
 }
@@ -55,21 +37,24 @@ func NewPassPersist(config *ConfigT) *PassPersist {
 	}
 }
 
-func (p *PassPersist) get(oid OID) *VarBind {
+func (p *PassPersist) get(oid *Oid) *VarBind {
 	log.Debug().Msgf("getting oid: %s", oid.String())
 	return p.cache.Get(oid)
 }
 
-func (p *PassPersist) getNext(oid OID) *VarBind {
+func (p *PassPersist) getNext(oid *Oid) *VarBind {
 	return p.cache.GetNext(oid)
 }
 
-func (p *PassPersist) AddEntry(oid OID, value typedValue) error {
-	oid = p.baseOid.Append(oid)
+func (p *PassPersist) AddEntry(subs []int, value typedValue) error {
+	oid, err := p.baseOid.Append(subs)
+	if err != nil {
+		return err
+	}
 
 	log.Debug().Msgf("adding %s: %s, %s", value.TypeString(), oid, value)
 
-	err := p.cache.Set(&VarBind{
+	err = p.cache.Set(&VarBind{
 		Oid:       oid,
 		ValueType: value.TypeString(),
 		Value:     value,
@@ -82,39 +67,39 @@ func (p *PassPersist) AddEntry(oid OID, value typedValue) error {
 	return nil
 }
 
-func (p *PassPersist) AddString(oid OID, value string) error {
-	return p.AddEntry(oid, typedValue{Value: &StringVal{Value: value}})
+func (p *PassPersist) AddString(subs []int, value string) error {
+	return p.AddEntry(subs, typedValue{Value: &StringVal{Value: value}})
 }
 
-func (p *PassPersist) AddInt(oid OID, value int) error {
-	return p.AddEntry(oid, typedValue{Value: &IntVal{Value: value}})
+func (p *PassPersist) AddInt(subs []int, value int) error {
+	return p.AddEntry(subs, typedValue{Value: &IntVal{Value: value}})
 }
 
-func (p *PassPersist) AddOID(oid OID, value OID) error {
+func (p *PassPersist) AddOID(subs []int, value Oid) error {
 	return nil
 }
 
-func (p *PassPersist) AddOctetString(oid OID, value []byte) error {
+func (p *PassPersist) AddOctetString(subs []int, value []byte) error {
 	return nil
 }
 
-func (p *PassPersist) AddIP(oid OID, ip net.IP) error {
+func (p *PassPersist) AddIP(subs []int, ip net.IP) error {
 	return nil
 }
 
-func (p *PassPersist) AddCounter32(oid OID, value int32) error {
-	return nil
+func (p *PassPersist) AddCounter32(subs []int, value int32) error {
+	return p.AddEntry(subs, typedValue{Value: &Counter32Val{Value: value}})
 }
 
-func (p *PassPersist) AddCounter64(oid OID, value int64) error {
-	return nil
+func (p *PassPersist) AddCounter64(subs []int, value int64) error {
+	return p.AddEntry(subs, typedValue{Value: &Counter64Val{Value: value}})
 }
 
-func (p *PassPersist) AddGauge(oid OID, value int) error {
-	return nil
+func (p *PassPersist) AddGauge(subs []int, value int) error {
+	return p.AddEntry(subs, typedValue{Value: &GaugeVal{Value: value}})
 }
 
-func (p *PassPersist) AddTimeTicks(oid OID, value time.Duration) error {
+func (p *PassPersist) AddTimeTicks(subs []int, value time.Duration) error {
 	return nil
 }
 
@@ -129,6 +114,7 @@ func (p *PassPersist) Dump() {
 
 	p.cache.Dump()
 }
+
 func setPrio(prio int) error {
 	var err error
 
@@ -143,6 +129,7 @@ func setPrio(prio int) error {
 
 	return nil
 }
+
 func (p *PassPersist) update(ctx context.Context, callback func(*PassPersist)) {
 
 	err := setPrio(15)
@@ -248,12 +235,10 @@ func watchStdin(ctx context.Context, input chan<- string, done chan<- bool) {
 	}
 }
 
-func (p *PassPersist) convertAndValidateOid(oid string) (OID, bool) {
-	o, err := OIDFromString(oid)
+func (p *PassPersist) convertAndValidateOid(oid string) (*Oid, bool) {
+	o, err := NewOid(oid)
 	if err != nil {
-		return o, false
-	} else if !o.HasPrefix(p.baseOid) {
-		return o, false
+		return nil, false
 	}
 	return o, true
 }

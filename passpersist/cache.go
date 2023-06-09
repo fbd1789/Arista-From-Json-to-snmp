@@ -3,7 +3,6 @@ package passpersist
 import (
 	"encoding/json"
 	"fmt"
-	"sort"
 	"sync"
 
 	"github.com/rs/zerolog/log"
@@ -19,8 +18,17 @@ func NewCache() *Cache {
 type Cache struct {
 	staged    map[string]*VarBind
 	committed map[string]*VarBind
-	index     []string
+	index     Oids
 	mu        sync.RWMutex
+}
+
+func (c *Cache) getIndex(o *Oid) int {
+	for p, v := range c.index {
+		if v.Equal(o) {
+			return p
+		}
+	}
+	return -1
 }
 
 func (c *Cache) Commit() error {
@@ -30,11 +38,12 @@ func (c *Cache) Commit() error {
 	c.committed = c.staged
 	c.staged = make(map[string]*VarBind)
 
-	idx := make([]string, 0, len(c.committed))
-	for k := range c.committed {
-		idx = append(idx, k)
+	idx := make(Oids, 0, len(c.committed))
+	for _, vb := range c.committed {
+		idx = append(idx, vb.Oid)
 	}
-	sort.Strings(idx)
+	//sort.Strings(idx)
+	idx = idx.Sort()
 	c.index = idx
 
 	return nil
@@ -53,39 +62,40 @@ func (c *Cache) Dump() {
 	fmt.Println(string(y))
 }
 
-func (c *Cache) Get(oid OID) *VarBind {
+func (c *Cache) Get(oid *Oid) *VarBind {
 	c.RLock()
 	defer c.RUnlock()
 
 	log.Debug().Msgf("getting value at: %s", oid.String())
 	if v, ok := c.committed[oid.String()]; ok {
+		log.Debug().Msgf("got value at: %s=%s", oid.String(), &v.Value)
 		return v
 	}
 	return nil
 }
 
-func (c *Cache) GetNext(oid OID) *VarBind {
+func (c *Cache) GetNext(oid *Oid) *VarBind {
 	c.RLock()
 	defer c.RUnlock()
 
-	so := oid.String()
-	fo := c.index[0]
-	fos, _ := OIDFromString(fo)
+	log.Debug().Msgf("getting next value after: %s", oid.String())
 
-	log.Debug().Msgf("getting next value after: %s", so)
-
-	if len(oid) < len(fos) {
-		return c.committed[fo]
-	}
-
-	for i, o := range c.index {
-		if o == so {
-			if i < len(c.index) {
-				n := c.index[i+1]
-				return c.committed[n]
-			}
+	idx := c.getIndex(oid)
+	if idx < 0 {
+		if !c.index[0].Contains(oid) {
+			return nil
 		}
 	}
+
+	idx++
+
+	if idx < len(c.index) {
+		next := c.index[idx]
+		if v, ok := c.committed[next.String()]; ok {
+			return v
+		}
+	}
+
 	return nil
 }
 
@@ -93,19 +103,7 @@ func (c *Cache) Set(v *VarBind) error {
 
 	log.Debug().Msgf("staging: %s %s %v", v.Oid, v.ValueType, v.Value)
 
-	// // WHY is the oid being overwritten????
-	// for k, val := range c.staged {
-	// 	fmt.Printf("!!! %s :: %v\n", k, val)
-	// }
-
 	c.staged[v.Oid.String()] = v
-
-	// fmt.Printf("??? %+v, %v\n", c.staged[v.Oid.String()], v)
-
-	// // WHY is the oid being overwritten????
-	// for k, val := range c.staged {
-	// 	fmt.Printf(">>> %s :: %+v\n", k, val)
-	// }
 
 	return nil
 }
