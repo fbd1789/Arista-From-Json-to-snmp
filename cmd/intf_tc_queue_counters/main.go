@@ -41,13 +41,8 @@ func getTrafficClassIndex(s string) int {
 func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	// conf := &passpersist.ConfigT{
-	// 	BaseOid:  passpersist.MustNewOid(passpersist.DEFAULT_BASE_OID),
-	// 	Refresh:  60 * time.Second,
-	// 	LogLevel: 5,
-	// }
-
-	passpersist.EnableSyslogLogger("debug", syslog.LOG_LOCAL4, "pp-intf_tc_queue_counters")
+	passpersist.BaseOid, _ = passpersist.MustNewOid(passpersist.AristaExperimentalMib).Append([]int{224})
+	passpersist.EnableSyslogLogger("debug", syslog.LOG_LOCAL4, "intf_tc_queue_counters")
 	passpersist.RefreshInterval = 60 * time.Second
 
 	pp := passpersist.NewPassPersist()
