@@ -12,71 +12,45 @@ import (
 
 	"os"
 
-	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"golang.org/x/sys/unix"
 )
-
-func init() {
-	zerolog.SetGlobalLevel(zerolog.InfoLevel)
-	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
-	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr, TimeFormat: time.RFC3339})
-}
 
 type SetError int
 
 const (
 	NotWriteable SetError = iota
-	WrongType
-	WrongValue
-	WrongLength
-	InconsistentValue
+	// WrongType
+	// WrongValue
+	// WrongLength
+	// InconsistentValue
 )
 
 func (e SetError) String() string {
 	switch e {
 	case NotWriteable:
 		return "not-writable"
-	case WrongType:
-		return "wrong-type"
-	case WrongValue:
-		return "wrong-value"
-	case WrongLength:
-		return "wrong-length"
-	case InconsistentValue:
-		return "inconsistent-value"
+	// case WrongType:
+	// 	return "wrong-type"
+	// case WrongValue:
+	// 	return "wrong-value"
+	// case WrongLength:
+	// 	return "wrong-length"
+	// case InconsistentValue:
+	// 	return "inconsistent-value"
 	default:
 		log.Fatal().Msgf("unknown value type id: %d", e)
 	}
 	return ""
 }
 
-type VarBind struct {
-	Oid       *Oid       `json:"oid"`
-	ValueType string     `json:"type"`
-	Value     typedValue `json:"value"`
-}
-
-func (r *VarBind) String() string {
-	return fmt.Sprintf("%s, %s, %v", r.Oid, r.Value.TypeString(), r.Value)
-}
-
-func (r *VarBind) Marshal() string {
-
-	return fmt.Sprintf("%s\n%s\n%s", r.Oid, r.Value.TypeString(), r.Value.String())
-}
-
 type PassPersist struct {
-	baseOid *Oid
-	refresh time.Duration
-	cache   *Cache
+	cache *Cache
 }
 
-func NewPassPersist(config *ConfigT) *PassPersist {
+func NewPassPersist() *PassPersist {
 	return &PassPersist{
-		baseOid: config.BaseOid,
-		refresh: config.Refresh,
-		cache:   NewCache(),
+		cache: NewCache(),
 	}
 }
 
@@ -90,7 +64,7 @@ func (p *PassPersist) getNext(oid *Oid) *VarBind {
 }
 
 func (p *PassPersist) AddEntry(subs []int, value typedValue) error {
-	oid, err := p.baseOid.Append(subs)
+	oid, err := BaseOid.Append(subs)
 	if err != nil {
 		return err
 	}
@@ -149,8 +123,8 @@ func (p *PassPersist) AddTimeTicks(subIds []int, value time.Duration) error {
 func (p *PassPersist) Dump() {
 	out := make(map[string]interface{})
 
-	out["base-oid"] = p.baseOid
-	out["refresh"] = p.refresh
+	out["base-oid"] = BaseOid
+	out["refresh"] = RefreshInterval
 
 	j, _ := json.MarshalIndent(out, "", "  ")
 	fmt.Println(string(j))
@@ -185,7 +159,7 @@ func (p *PassPersist) update(ctx context.Context, callback func(*PassPersist)) {
 		case <-ctx.Done():
 			return
 		default:
-			timer := time.NewTimer(p.refresh)
+			timer := time.NewTimer(RefreshInterval)
 
 			callback(p)
 			p.cache.Commit()
@@ -234,7 +208,6 @@ func (p *PassPersist) Run(ctx context.Context, f func(*PassPersist)) {
 					fmt.Println("NONE")
 				}
 			case "set":
-				// not-writable, wrong-type, wrong-length, wrong-value or inconsistent-value
 				fmt.Println("not-writable")
 			case "DUMP", "D":
 				p.Dump()
@@ -285,7 +258,7 @@ func (p *PassPersist) convertAndValidateOid(oid string) (*Oid, bool) {
 		return nil, false
 	}
 
-	if !o.Contains(p.baseOid) {
+	if !o.Contains(BaseOid) {
 		return o, false
 	}
 

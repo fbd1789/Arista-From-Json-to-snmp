@@ -42,7 +42,7 @@ func (c *Cache) Commit() error {
 	for _, vb := range c.committed {
 		idx = append(idx, vb.Oid)
 	}
-	//sort.Strings(idx)
+
 	idx = idx.Sort()
 	c.index = idx
 
@@ -81,6 +81,9 @@ func (c *Cache) GetNext(oid *Oid) *VarBind {
 	log.Debug().Msgf("getting next value after: %s", oid.String())
 
 	idx := c.getIndex(oid)
+
+	log.Debug().Msgf("got index of %d", idx)
+
 	if idx < 0 {
 		if !c.index[0].Contains(oid) {
 			return nil

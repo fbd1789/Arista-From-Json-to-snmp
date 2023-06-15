@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"log/syslog"
 	"time"
 
 	"github.com/arista-northwest/go-passpersist/passpersist"
@@ -11,12 +12,14 @@ import (
 func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	conf := &passpersist.ConfigT{
-		BaseOid:  passpersist.MustNewOid(passpersist.DEFAULT_BASE_OID),
-		Refresh:  1 * time.Second,
-		LogLevel: 5,
-	}
-	pp := passpersist.NewPassPersist(conf)
+
+	//console logger breaks the passpersis protocol even though it writes to stderr
+	//passpersist.EnableConsoleLogger("debug")
+	passpersist.EnableSyslogLogger("debug", syslog.LOG_LOCAL4, "passpersist-hello")
+	passpersist.RefreshInterval = 60 * time.Second
+
+	pp := passpersist.NewPassPersist()
+
 	pp.Run(ctx, func(pp *passpersist.PassPersist) {
 		pp.AddString([]int{0}, "Hello from PassPersist")
 		pp.AddString([]int{1}, "You found a secret message!")

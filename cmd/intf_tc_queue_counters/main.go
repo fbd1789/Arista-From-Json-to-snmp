@@ -2,6 +2,8 @@ package main
 
 import (
 	"context"
+	"fmt"
+	"log/syslog"
 	"regexp"
 	"strconv"
 	"strings"
@@ -39,12 +41,16 @@ func getTrafficClassIndex(s string) int {
 func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	conf := &passpersist.ConfigT{
-		BaseOid:  passpersist.MustNewOid(passpersist.DEFAULT_BASE_OID),
-		Refresh:  60 * time.Second,
-		LogLevel: 5,
-	}
-	pp := passpersist.NewPassPersist(conf)
+	// conf := &passpersist.ConfigT{
+	// 	BaseOid:  passpersist.MustNewOid(passpersist.DEFAULT_BASE_OID),
+	// 	Refresh:  60 * time.Second,
+	// 	LogLevel: 5,
+	// }
+
+	passpersist.EnableSyslogLogger("debug", syslog.LOG_LOCAL4, "pp-intf_tc_queue_counters")
+	passpersist.RefreshInterval = 60 * time.Second
+
+	pp := passpersist.NewPassPersist()
 	pp.Run(ctx, func(pp *passpersist.PassPersist) {
 		var data InterfaceQueueCounters
 		idxs := getIfIndexeMap()
@@ -56,7 +62,9 @@ func main() {
 				for tc, counters := range tcs.TrafficClasses {
 					log.Debug().Msgf("updating interface '%s:%s'", intf, tc)
 					tci := getTrafficClassIndex(tc)
-					pp.AddString([]int{1, idx, tci}, strings.Join([]string{intf, tc}, ":"))
+					//pp.AddOctetString([]int{1, idx, tci}, []byte{idx, tci})
+					pp.AddString([]int{1, idx, tci}, fmt.Sprintf("%d.%d", idx, tci))
+					pp.AddString([]int{2, idx, tci}, strings.Join([]string{intf, tc}, ":"))
 					pp.AddCounter64([]int{3, idx, tci}, counters.EnqueuedBytes)
 					pp.AddCounter64([]int{4, idx, tci}, counters.EnqueuedPackets)
 					pp.AddCounter64([]int{5, idx, tci}, counters.DroppedBytes)

@@ -1,12 +1,28 @@
 package passpersist
 
 import (
+	"fmt"
 	"net"
 	"strconv"
 	"time"
 
 	"github.com/rs/zerolog/log"
 )
+
+type VarBind struct {
+	Oid       *Oid       `json:"oid"`
+	ValueType string     `json:"type"`
+	Value     typedValue `json:"value"`
+}
+
+func (r *VarBind) String() string {
+	return fmt.Sprintf("%s, %s, %v", r.Oid, r.Value.TypeString(), r.Value)
+}
+
+func (r *VarBind) Marshal() string {
+
+	return fmt.Sprintf("%s\n%s\n%s", r.Oid, r.Value.TypeString(), r.Value.String())
+}
 
 type typedValue struct {
 	Value isTypedValue
