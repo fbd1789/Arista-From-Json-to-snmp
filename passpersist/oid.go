@@ -12,6 +12,7 @@ import (
 	"strings"
 
 	"github.com/geoffgarside/ber"
+	"github.com/rs/zerolog/log"
 )
 
 type InvalidOidErr struct {
@@ -100,6 +101,14 @@ func (v *Oid) Append(subs []int) (*Oid, error) {
 	return NewOid(buf.String())
 }
 
+func (v *Oid) MustAppend(subs []int) *Oid {
+	o, err := v.Append(subs)
+	if err != nil {
+		log.Panic().Err(err).Send()
+	}
+	return o
+}
+
 func NewOid(s string) (oid *Oid, err error) {
 	subids := strings.Split(s, ".")
 
@@ -139,11 +148,13 @@ func NewOid(s string) (oid *Oid, err error) {
 
 // MustNewOid is like NewOid but panics if argument cannot be parsed
 func MustNewOid(s string) *Oid {
-	if oid, err := NewOid(s); err != nil {
-		panic(`snmpgo.MustNewOid: ` + err.Error())
-	} else {
-		return oid
+	oid, err := NewOid(s)
+
+	if err != nil {
+		log.Panic().Err(err).Send()
 	}
+
+	return oid
 }
 
 type Oids []*Oid

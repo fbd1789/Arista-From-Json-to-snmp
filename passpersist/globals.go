@@ -3,7 +3,6 @@ package passpersist
 import (
 	"log/syslog"
 	"os"
-	"strings"
 	"time"
 
 	"github.com/rs/zerolog"
@@ -21,7 +20,7 @@ const (
 )
 
 var (
-	BaseOid = MustNewOid(strings.Join([]string{AristaExperimentalMib, "224"}, "."))
+	BaseOid = MustNewOid(NetSnmpExtendMib).MustAppend([]int{224})
 	// 224 = 112 + 112 = pp
 	RefreshInterval = time.Second * 60
 )
