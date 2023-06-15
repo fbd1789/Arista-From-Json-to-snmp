@@ -41,8 +41,12 @@ func getTrafficClassIndex(s string) int {
 func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
+
+	// global settings
 	passpersist.BaseOid, _ = passpersist.MustNewOid(passpersist.AristaExperimentalMib).Append([]int{224})
-	passpersist.EnableSyslogLogger("debug", syslog.LOG_LOCAL4, "intf_tc_queue_counters")
+	passpersist.EnableSyslogLogger("info", syslog.LOG_LOCAL4, "intf_tc_queue_counters")
+	// uncomment for debugging
+	// passpersist.EnableConsoleLogger("debug")
 	passpersist.RefreshInterval = 60 * time.Second
 
 	pp := passpersist.NewPassPersist()
@@ -52,12 +56,10 @@ func main() {
 		eosCommandJson("show interfaces counters queue", &data)
 
 		for intf, idx := range idxs {
-			log.Debug().Msgf("updating interface %s@%d", intf, idx)
 			if tcs, ok := data.IngressVoqCounters.Interface[intf]; ok {
 				for tc, counters := range tcs.TrafficClasses {
 					log.Debug().Msgf("updating interface '%s:%s'", intf, tc)
 					tci := getTrafficClassIndex(tc)
-					//pp.AddOctetString([]int{1, idx, tci}, []byte{idx, tci})
 					pp.AddString([]int{1, idx, tci}, fmt.Sprintf("%d.%d", idx, tci))
 					pp.AddString([]int{2, idx, tci}, strings.Join([]string{intf, tc}, ":"))
 					pp.AddCounter64([]int{3, idx, tci}, counters.EnqueuedBytes)
