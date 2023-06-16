@@ -25,7 +25,7 @@
 ## Build
 
 ```
-GOOS=linux go build -o intf_tc_queue_counters .
+GOOS=linux go build -o intf_tc_queue_counters-linux-amd64 .
 ```
 
 Note: the base OID can be changed by editing the source file
