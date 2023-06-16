@@ -1,5 +1,27 @@
 # intf_tc_queue_counters
 
+## OID Structure
+
+```
++--IntfTcQueueTable(1)
+|  |
+|  +--IntfTcQueueEntry(1)
+|  |  |  Index: ifIndex, trafficClass
+|  |  |
+|  |  +-- String IntfTcQueueIndex(1)
+|  |  |
+|  |  +-- String IntfTcQueueName(2)
+|  |  |
+|  |  +-- Counter64 IntfTcQueueEnqueuedBytes(3)
+|  |  |
+|  |  +-- Counter64 IntfTcQueueEnqueuedPackets(4)
+|  |  |
+|  |  +-- Counter64 IntfTcQueueDroppedBytes(5)
+|  |  |
+|  |  +-- Counter64 IntfTcQueueDroppedPackets(6)
+
+```
+
 ## Build
 
 ```

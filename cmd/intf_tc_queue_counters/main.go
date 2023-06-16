@@ -60,12 +60,12 @@ func main() {
 				for tc, counters := range tcs.TrafficClasses {
 					log.Debug().Msgf("updating interface '%s:%s'", intf, tc)
 					tci := getTrafficClassIndex(tc)
-					pp.AddString([]int{1, idx, tci}, fmt.Sprintf("%d.%d", idx, tci))
-					pp.AddString([]int{2, idx, tci}, strings.Join([]string{intf, tc}, ":"))
-					pp.AddCounter64([]int{3, idx, tci}, counters.EnqueuedBytes)
-					pp.AddCounter64([]int{4, idx, tci}, counters.EnqueuedPackets)
-					pp.AddCounter64([]int{5, idx, tci}, counters.DroppedBytes)
-					pp.AddCounter64([]int{6, idx, tci}, counters.DroppedPackets)
+					pp.AddString([]int{1, 1, 1, idx, tci}, fmt.Sprintf("%d.%d", idx, tci))
+					pp.AddString([]int{1, 1, 2, idx, tci}, strings.Join([]string{intf, tc}, ":"))
+					pp.AddCounter64([]int{1, 1, 3, idx, tci}, counters.EnqueuedBytes)
+					pp.AddCounter64([]int{1, 1, 4, idx, tci}, counters.EnqueuedPackets)
+					pp.AddCounter64([]int{1, 1, 5, idx, tci}, counters.DroppedBytes)
+					pp.AddCounter64([]int{1, 1, 6, idx, tci}, counters.DroppedPackets)
 				}
 			}
 
