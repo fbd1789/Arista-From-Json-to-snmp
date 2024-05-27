@@ -11,7 +11,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/geoffgarside/ber"
 	"github.com/rs/zerolog/log"
 )
 
@@ -40,14 +39,14 @@ func (v Oid) Marshal() ([]byte, error) {
 	return asn1.Marshal(v.Value)
 }
 
-func (v Oid) Unmarshal(b []byte) (rest []byte, err error) {
-	var i asn1.ObjectIdentifier
-	rest, err = ber.Unmarshal(b, &i)
-	if err == nil {
-		v.Value = i
-	}
-	return
-}
+// func (v *Oid) Unmarshal(b []byte) (rest []byte, err error) {
+// 	var i asn1.ObjectIdentifier
+// 	rest, err = ber.Unmarshal(b, &i)
+// 	if err == nil {
+// 		v.Value = i
+// 	}
+// 	return
+// }
 
 // Returns true if this OID contains the specified OID
 func (v Oid) Contains(o Oid) bool {
