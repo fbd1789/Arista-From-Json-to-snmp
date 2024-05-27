@@ -17,8 +17,8 @@ func eosCommand(command string) []string {
 	return c.Status().Stdout
 }
 
-func eosCommandJson(cmd string, v any) any {
-	out := eosCommand(fmt.Sprintf("%s | json", cmd))
+func eosCommandJson(command string, v any) any {
+	out := eosCommand(fmt.Sprintf("%s | json", command))
 	var buf bytes.Buffer
 	for _, l := range out {
 		buf.WriteString(l)

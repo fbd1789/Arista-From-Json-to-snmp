@@ -3,13 +3,20 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"regexp"
+	"strconv"
+	"strings"
 
 	//"os/exec"
 
+	"github.com/arista-northwest/go-passpersist/passpersist"
 	"github.com/go-cmd/cmd"
+	"github.com/rs/zerolog/log"
 )
 
 /*
+** INCOMPLETE **
+
 RSVP-TE
 
 Need : LSPResBWMegB, CSPFMetric, Metric
@@ -25,9 +32,11 @@ MPLS-TE-STD-MIB::mplsTunnelName[0][2][16843009][16843010] = STRING: TU.rwa01.icr
 mplsTunnelIndex, mplsTunnelInstance, mplsTunnelIngressLSRId, mplsTunnelEgressLSRId
 */
 
-var tunnels = []byte(`{
+var mockTunnelIndexNames = []string{"MPLS-TE-STD-MIB::mplsTunnelName[0][2][16843009][16843010] = STRING: TUN-CEOS1-CEOS2"}
+
+var mockTunnels = []byte(`{
     "tunnels": {
-        "TU.rwa01.icr01": {
+        "TUN-CEOS1-CEOS2": {
             "autoBandwidth": true,
             "requestedBandwidth": 5000000,
             "signalBandwidth": true,
@@ -43,7 +52,7 @@ var tunnels = []byte(`{
                     "lspCount": 1,
                     "primaryPath": {
                         "hops": [
-                            "10.12.12.3"
+                            "169.254.0.1"
                         ],
                         "state": "up",
                         "pathErrors": [],
@@ -73,7 +82,7 @@ var tunnels = []byte(`{
     }
 }`)
 
-var routes = []byte(`{
+var mockRoutes = []byte(`{
     "vrfs": {
         "default": {
             "routes": {
@@ -87,7 +96,7 @@ var routes = []byte(`{
                             "tunnelDescriptor": {
                                 "tunnelIndex": 1,
                                 "tunnelType": "RSVP LER",
-                                "tunnelName": "TU.rwa01.icr01",
+                                "tunnelName": "TUN-CEOS1-CEOS2",
                                 "tunnelAddressFamily": "IPv4",
                                 "tunnelEndPoint": "1.1.1.2/32"
                             },
@@ -117,9 +126,10 @@ var routes = []byte(`{
 }`)
 
 type Tunnel struct {
-	RequestedBandwidth int `json:"requestedBandwidth"`
-	CurrentBandwidth   int `json:"currentBandwidth"`
-	Metric             int `json:"metric"`
+	Destination        string `json:"destination"`
+	RequestedBandwidth int    `json:"requestedBandwidth"`
+	CurrentBandwidth   int    `json:"currentBandwidth"`
+	Metric             int    `json:"metric"`
 }
 
 type Tunnels struct {
@@ -145,7 +155,7 @@ type Routes struct {
 |   +-- rsvpTeTunnelsTable(1)
 |   |   |
 |   |   +-- rsvpTeTunnelsEntry(1)
-|	|	| Index: destination
+|	|	| Index: [][][][]
 |   |	|
 |   |   +-- Integer currentBandwidth(1)
 |   |   |
@@ -156,43 +166,93 @@ type Routes struct {
 |   |   +-- Integer metric(3)
 */
 
-func eosCommand(command string) []string {
-	// TERM=dumb Cli -p 15 -c ''
-	// name := "Cli"
-	// args := append([]string{"-p", "15", "-c"}, tokens...)
-	// cmd := exec.Command(name, args...)
-	// cmd.Env = append(cmd.Env, "TERM=dumb")
-	// err := cmd.Run()
-	// if err != nil {
-	// 	log.Fatalf("command failed: %s", err)
-	// }
-
-	c := cmd.NewCmd("Cli", "-p", "15", "-c", command)
+func eosCommand(command string) ([]string, error) {
+	c := cmd.NewCmd("Cli", "-p15", "-c", command)
 	c.Env = append(c.Env, "TERM=dumb")
+
 	<-c.Start()
 
-	return c.Status().Stdout
+	stderr := c.Status().Stderr
+	if len(stderr) > 0 {
+		return []string{}, fmt.Errorf("%s", strings.Join(stderr, "\n"))
+	}
+	return c.Status().Stdout, nil
+}
+
+func parseTunnelIndexNames(out []string) (map[string]passpersist.Oid, error) {
+	// convert this:
+	// "MPLS-TE-STD-MIB::mplsTunnelName[0][2][16843009][16843010] = STRING: TUN-CEOS1-CEOS2"
+	// to:
+	// map[TUN-CEOS1-CEOS2:0.0.2.16843009.16843010]
+
+	tuns := make(map[string]passpersist.Oid)
+
+	for _, line := range out {
+		idx := passpersist.MustNewOid(".")
+		line = strings.Trim(line, "\n")
+
+		re := regexp.MustCompile(`(?:\[(\d+)\])(?:\[(\d+)\])(?:\[(\d+)\])(?:\[(\d+)\])\s+=\s+STRING: ([^$]+)`)
+		groups := re.FindStringSubmatch(line)
+
+		if len(groups) == 0 {
+			return nil, fmt.Errorf("failed to parse tunnel indexes from: %s", line)
+		}
+
+		name := groups[len(groups)-1]
+
+		for _, grp := range groups[:len(groups)-1] {
+			t, _ := strconv.Atoi(grp)
+			idx, _ = idx.Append([]int{t})
+		}
+
+		tuns[name] = idx
+	}
+	return tuns, nil
 }
 
 func main() {
-	var tun Tunnels
-	var rtes Routes
+	// var tun Tunnels
+	// var rtes Routes
 
-	json.Unmarshal(tunnels, &tun)
-	json.Unmarshal(routes, &rtes)
-	// fmt.Printf("%v\n%v\n", tun, rtes)
+	// tun = json.Unmarshal(tunnels, &tun)
+	// json.Unmarshal(routes, &rtes)
 
 	// fmt.Printf("%d", rtes.VRFs["default"].Routes["1.1.1.2/32"].Metric)
+	// eosCommand("show snmp mib walk MPLS-TE-STD-MIB::mplsTunnelName")
 
-	tuns := eosCommand("show snmp mib walk MPLS-TE-STD-MIB::mplsTunnelName")
+	tunnels, err := parseTunnelIndexNames(mockTunnelIndexNames)
+	if err != nil {
+		log.Fatal().Msg(err.Error())
+	}
 
-	fmt.Printf("TUNS: %s", tuns)
+	// //fmt.Printf("%+v\n", tunnels)
+	// var tuns Tunnels
+	// json.Unmarshal(mockTunnels, tuns)
+
+	// var rtes Routes
+	// json.Unmarshal(mockTunnels, tuns)
+
+	for name, idx := range tunnels {
+		tuns := &Tunnels{}
+		rtes := &Routes{}
+
+		json.Unmarshal(mockTunnels, tuns)
+		json.Unmarshal(mockRoutes, rtes)
+
+		t := tuns.Tunnels[name]
+
+		currBw := t.CurrentBandwidth
+		reqBw := t.RequestedBandwidth
+		cspfMet := t.Metric
+		metric := rtes.VRFs["default"].Routes[t.Destination].Metric
+		fmt.Printf("%+v\n\n", t)
+		fmt.Printf("%+v\n\n", rtes)
+		fmt.Printf("%s %s %d %d %d %d\n", idx, name, currBw, reqBw, cspfMet, metric)
+	}
 	// passpersist.Config.Refresh = time.Second * 5
 	// pp := passpersist.NewPassPersist(&passpersist.Config)
 	// ctx := context.Background()
 	// pp.Run(ctx, func(pp *passpersist.PassPersist) {
-	// 	pp.AddString([]int{255, 0}, "Hello")
-	// 	pp.AddInt([]int{255, 1}, 42)
-	// 	pp.AddString([]int{255, 2}, "!")
+
 	// })
 }
