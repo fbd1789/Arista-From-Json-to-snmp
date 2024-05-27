@@ -44,7 +44,7 @@ func DisableLogging() {
 
 func EnableConsoleLogger(level string) {
 	SetLogLevel(level)
-	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr, TimeFormat: time.RFC3339})
+	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr, TimeFormat: time.RFC3339}).With().Timestamp().Logger()
 }
 
 func EnableSyslogLogger(level string, prio syslog.Priority, tag string) {

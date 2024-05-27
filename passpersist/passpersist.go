@@ -6,7 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"net"
+	"net/netip"
 	"runtime"
 	"time"
 
@@ -54,12 +54,12 @@ func NewPassPersist() *PassPersist {
 	}
 }
 
-func (p *PassPersist) get(oid *Oid) *VarBind {
+func (p *PassPersist) get(oid Oid) *VarBind {
 	log.Debug().Msgf("getting oid: %s", oid.String())
 	return p.cache.Get(oid)
 }
 
-func (p *PassPersist) getNext(oid *Oid) *VarBind {
+func (p *PassPersist) getNext(oid Oid) *VarBind {
 	return p.cache.GetNext(oid)
 }
 
@@ -100,7 +100,11 @@ func (p *PassPersist) AddOctetString(subIds []int, value []byte) error {
 	return p.AddEntry(subIds, typedValue{&OctetStringVal{value}})
 }
 
-func (p *PassPersist) AddIP(subIds []int, value net.IP) error {
+func (p *PassPersist) AddIP(subIds []int, value netip.Addr) error {
+	return p.AddEntry(subIds, typedValue{&IPAddrVal{value}})
+}
+
+func (p *PassPersist) AddIPv6(subIds []int, value netip.Addr) error {
 	return p.AddEntry(subIds, typedValue{&IPAddrVal{value}})
 }
 
@@ -213,6 +217,8 @@ func (p *PassPersist) Run(ctx context.Context, f func(*PassPersist)) {
 				p.Dump()
 			case "DUMPCACHE", "DC":
 				p.cache.Dump()
+			case "DUMPINDEX", "DI":
+				p.cache.DumpIndex()
 			default:
 				fmt.Println("NONE")
 			}
@@ -251,11 +257,11 @@ func watchStdin(ctx context.Context, input chan<- string, done chan<- bool) {
 	}
 }
 
-func (p *PassPersist) convertAndValidateOid(oid string) (*Oid, bool) {
+func (p *PassPersist) convertAndValidateOid(oid string) (Oid, bool) {
 	o, err := NewOid(oid)
 
 	if err != nil {
-		return nil, false
+		return Oid{}, false
 	}
 
 	if !o.Contains(BaseOid) {

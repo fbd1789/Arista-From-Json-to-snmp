@@ -28,19 +28,19 @@ type Oid struct {
 	Value asn1.ObjectIdentifier
 }
 
-func (v *Oid) String() string {
+func (v Oid) String() string {
 	return v.Value.String()
 }
 
-func (v *Oid) Type() string {
+func (v Oid) Type() string {
 	return "Oid"
 }
 
-func (v *Oid) Marshal() ([]byte, error) {
+func (v Oid) Marshal() ([]byte, error) {
 	return asn1.Marshal(v.Value)
 }
 
-func (v *Oid) Unmarshal(b []byte) (rest []byte, err error) {
+func (v Oid) Unmarshal(b []byte) (rest []byte, err error) {
 	var i asn1.ObjectIdentifier
 	rest, err = ber.Unmarshal(b, &i)
 	if err == nil {
@@ -50,8 +50,8 @@ func (v *Oid) Unmarshal(b []byte) (rest []byte, err error) {
 }
 
 // Returns true if this OID contains the specified OID
-func (v *Oid) Contains(o *Oid) bool {
-	if o == nil || len(v.Value) < len(o.Value) {
+func (v Oid) Contains(o Oid) bool {
+	if len(v.Value) < len(o.Value) {
 		return false
 	}
 	for i := 0; i < len(o.Value); i++ {
@@ -65,34 +65,36 @@ func (v *Oid) Contains(o *Oid) bool {
 // Returns 0 this OID is equal to the specified OID,
 // -1 this OID is lexicographically less than the specified OID,
 // 1 this OID is lexicographically greater than the specified OID
-func (v *Oid) Compare(o *Oid) int {
-	if o != nil {
-		vl := len(v.Value)
-		ol := len(o.Value)
-		for i := 0; i < vl; i++ {
-			if ol <= i || v.Value[i] > o.Value[i] {
-				return 1
-			} else if v.Value[i] < o.Value[i] {
-				return -1
-			}
-		}
-		if ol == vl {
-			return 0
+func (v Oid) Compare(o Oid) int {
+	vl := len(v.Value)
+	ol := len(o.Value)
+
+	for i := 0; i < vl; i++ {
+		if ol <= i || v.Value[i] > o.Value[i] {
+			return 1
+		} else if v.Value[i] < o.Value[i] {
+			return -1
 		}
 	}
+
+	if ol == vl {
+		return 0
+	}
+
 	return -1
 }
 
 // Returns true if this OID is same the specified OID
-func (v *Oid) Equal(o *Oid) bool {
-	if o == nil {
-		return false
-	}
+func (v Oid) Equal(o Oid) bool {
 	return v.Value.Equal(o.Value)
 }
 
+func (v Oid) StartsWith(o Oid) bool {
+	return v.Value[:len(o.Value)].Equal(o.Value)
+}
+
 // Returns Oid with additional sub-ids
-func (v *Oid) Append(subs []int) (*Oid, error) {
+func (v Oid) Append(subs []int) (Oid, error) {
 	buf := bytes.NewBufferString(v.String())
 	for _, i := range subs {
 		buf.WriteString(".")
@@ -101,7 +103,7 @@ func (v *Oid) Append(subs []int) (*Oid, error) {
 	return NewOid(buf.String())
 }
 
-func (v *Oid) MustAppend(subs []int) *Oid {
+func (v Oid) MustAppend(subs []int) Oid {
 	o, err := v.Append(subs)
 	if err != nil {
 		log.Panic().Err(err).Send()
@@ -109,7 +111,7 @@ func (v *Oid) MustAppend(subs []int) *Oid {
 	return o
 }
 
-func NewOid(s string) (oid *Oid, err error) {
+func NewOid(s string) (oid Oid, err error) {
 	subids := strings.Split(s, ".")
 
 	// if there is a leadong dot, the first element will be empty
@@ -117,39 +119,38 @@ func NewOid(s string) (oid *Oid, err error) {
 		subids = subids[1:]
 	}
 
+	// ISO/IEC 8825 Section 8.19.4
+	if len(subids) < 2 {
+		return Oid{}, &InvalidOidErr{s, "The first and second sub-identifier is required"}
+	}
+
 	// RFC2578 Section 3.5
 	if len(subids) > 128 {
-		return nil, &InvalidOidErr{s, "The sub-identifiers in an OID is up to 128"}
+		return Oid{}, &InvalidOidErr{s, "The sub-identifiers in an OID is up to 128"}
 	}
 
 	o := make(asn1.ObjectIdentifier, len(subids))
 	for i, v := range subids {
 		o[i], err = strconv.Atoi(v)
 		if err != nil || o[i] < 0 || int64(o[i]) > math.MaxUint32 {
-			return nil, &InvalidOidErr{s, fmt.Sprintf("The sub-identifiers is range %d..%d", 0, int64(math.MaxUint32))}
+			return Oid{}, &InvalidOidErr{s, fmt.Sprintf("The sub-identifiers is range %d..%d", 0, int64(math.MaxUint32))}
 		}
 	}
 
 	if len(o) > 0 && o[0] > 2 {
-		return nil, &InvalidOidErr{s, "The first sub-identifier is range 0..2"}
-	}
-
-	// ISO/IEC 8825 Section 8.19.4
-	if len(o) < 2 {
-		return nil, &InvalidOidErr{s, "The first and second sub-identifier is required"}
+		return Oid{}, &InvalidOidErr{s, "The first sub-identifier is range 0..2"}
 	}
 
 	if o[0] < 2 && o[1] >= 40 {
-		return nil, &InvalidOidErr{s, "The second sub-identifier is range 0..39"}
+		return Oid{}, &InvalidOidErr{s, "The second sub-identifier is range 0..39"}
 	}
 
-	return &Oid{o}, nil
+	return Oid{o}, nil
 }
 
 // MustNewOid is like NewOid but panics if argument cannot be parsed
-func MustNewOid(s string) *Oid {
+func MustNewOid(s string) Oid {
 	oid, err := NewOid(s)
-
 	if err != nil {
 		log.Panic().Err(err).Send()
 	}
@@ -157,7 +158,7 @@ func MustNewOid(s string) *Oid {
 	return oid
 }
 
-type Oids []*Oid
+type Oids []Oid
 
 // Sort a Oid list
 func (o Oids) Sort() Oids {
@@ -167,8 +168,8 @@ func (o Oids) Sort() Oids {
 	return c
 }
 
-func (o Oids) uniq(comp func(a, b *Oid) bool) Oids {
-	var before *Oid
+func (o Oids) uniq(comp func(a, b Oid) bool) Oids {
+	var before Oid
 	c := make(Oids, 0, len(o))
 	for _, oid := range o {
 		if !comp(before, oid) {
@@ -181,23 +182,15 @@ func (o Oids) uniq(comp func(a, b *Oid) bool) Oids {
 
 // Filter out adjacent OID list
 func (o Oids) Uniq() Oids {
-	return o.uniq(func(a, b *Oid) bool {
-		if b == nil {
-			return a == nil
-		} else {
-			return b.Equal(a)
-		}
+	return o.uniq(func(a, b Oid) bool {
+		return b.Equal(a)
 	})
 }
 
 // Filter out adjacent OID list with the same prefix
 func (o Oids) UniqBase() Oids {
-	return o.uniq(func(a, b *Oid) bool {
-		if b == nil {
-			return a == nil
-		} else {
-			return b.Contains(a)
-		}
+	return o.uniq(func(a, b Oid) bool {
+		return b.Contains(a)
 	})
 }
 
@@ -214,7 +207,7 @@ func (o sortableOids) Swap(i, j int) {
 }
 
 func (o sortableOids) Less(i, j int) bool {
-	return o.Oids[i] != nil && o.Oids[i].Compare(o.Oids[j]) < 1
+	return o.Oids[i].Compare(o.Oids[j]) < 1
 }
 
 func NewOids(s []string) (oids Oids, err error) {

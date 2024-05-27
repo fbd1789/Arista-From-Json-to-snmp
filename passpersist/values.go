@@ -2,7 +2,7 @@ package passpersist
 
 import (
 	"fmt"
-	"net"
+	"net/netip"
 	"strconv"
 	"time"
 
@@ -10,7 +10,7 @@ import (
 )
 
 type VarBind struct {
-	Oid       *Oid       `json:"oid"`
+	Oid       Oid        `json:"oid"`
 	ValueType string     `json:"type"`
 	Value     typedValue `json:"value"`
 }
@@ -120,18 +120,18 @@ func (v *typedValue) GetIntVal() int32 {
 	return 0
 }
 
-func (v *typedValue) GetIPAddrVal() net.IP {
+func (v *typedValue) GetIPAddrVal() netip.Addr {
 	if x, ok := v.GetValue().(*IPAddrVal); ok {
 		return x.Value
 	}
-	return net.ParseIP("0.0.0.0")
+	return netip.MustParseAddr("0.0.0.0")
 }
 
-func (v *typedValue) GetIPV6AddrVal() net.IP {
+func (v *typedValue) GetIPV6AddrVal() netip.Addr {
 	if x, ok := v.GetValue().(*IPV6AddrVal); ok {
 		return x.Value
 	}
-	return net.ParseIP("::")
+	return netip.MustParseAddr("::")
 }
 
 func (v *typedValue) GetOctetStringVal() []byte {
@@ -183,11 +183,11 @@ type IntVal struct {
 }
 
 type IPAddrVal struct {
-	Value net.IP
+	Value netip.Addr
 }
 
 type IPV6AddrVal struct {
-	Value net.IP
+	Value netip.Addr
 }
 
 type OctetStringVal struct {

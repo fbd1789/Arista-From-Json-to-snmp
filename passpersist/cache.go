@@ -22,9 +22,15 @@ type Cache struct {
 	index     Oids
 }
 
-func (c *Cache) getIndex(o *Oid) int {
+func (c *Cache) getIndex(o Oid) int {
 	for p, v := range c.index {
 		if v.Equal(o) {
+			return p
+		}
+	}
+
+	for p, v := range c.index {
+		if v.StartsWith(o) {
 			return p
 		}
 	}
@@ -45,8 +51,19 @@ func (c *Cache) Commit() error {
 
 	idx = idx.Sort()
 	c.index = idx
+	// c.reIndex()
 
 	return nil
+}
+
+func (c *Cache) DumpIndex() {
+	out := make([]string, len(c.index))
+
+	for i, o := range c.index {
+		out[i] = o.String()
+	}
+	y, _ := json.MarshalIndent(out, "", "  ")
+	fmt.Println(string(y))
 }
 
 func (c *Cache) Dump() {
@@ -62,7 +79,7 @@ func (c *Cache) Dump() {
 	fmt.Println(string(y))
 }
 
-func (c *Cache) Get(oid *Oid) *VarBind {
+func (c *Cache) Get(oid Oid) *VarBind {
 	c.RLock()
 	defer c.RUnlock()
 
@@ -74,7 +91,7 @@ func (c *Cache) Get(oid *Oid) *VarBind {
 	return nil
 }
 
-func (c *Cache) GetNext(oid *Oid) *VarBind {
+func (c *Cache) GetNext(oid Oid) *VarBind {
 	c.RLock()
 	defer c.RUnlock()
 
