@@ -89,7 +89,10 @@ func (v Oid) Equal(o Oid) bool {
 }
 
 func (v Oid) StartsWith(o Oid) bool {
-	return v.Value[:len(o.Value)].Equal(o.Value)
+	if len(v.Value) >= len(o.Value) {
+		return v.Value[:len(o.Value)].Equal(o.Value)
+	}
+	return false
 }
 
 // Returns Oid with additional sub-ids

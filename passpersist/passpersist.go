@@ -212,7 +212,7 @@ func (p *PassPersist) Run(ctx context.Context, f func(*PassPersist)) {
 					fmt.Println("NONE")
 				}
 			case "set":
-				fmt.Println("not-writable")
+				fmt.Println(NotWriteable)
 			case "DUMP", "D":
 				p.Dump()
 			case "DUMPCACHE", "DC":

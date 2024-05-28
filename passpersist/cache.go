@@ -2,6 +2,7 @@ package passpersist
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"sync"
 
@@ -22,19 +23,19 @@ type Cache struct {
 	index     Oids
 }
 
-func (c *Cache) getIndex(o Oid) int {
+func (c *Cache) getIndex(o Oid) (int, error) {
 	for p, v := range c.index {
 		if v.Equal(o) {
-			return p
+			return p, nil
 		}
 	}
 
 	for p, v := range c.index {
 		if v.StartsWith(o) {
-			return p
+			return p - 1, nil
 		}
 	}
-	return -1
+	return 0, errors.New("OID or prefix does not exist")
 }
 
 func (c *Cache) Commit() error {
@@ -51,7 +52,6 @@ func (c *Cache) Commit() error {
 
 	idx = idx.Sort()
 	c.index = idx
-	// c.reIndex()
 
 	return nil
 }
@@ -97,22 +97,22 @@ func (c *Cache) GetNext(oid Oid) *VarBind {
 
 	log.Debug().Msgf("getting next value after: %s", oid.String())
 
-	idx := c.getIndex(oid)
-
-	log.Debug().Msgf("got index of %d", idx)
-
-	if idx < 0 {
-		if !c.index[0].Contains(oid) {
-			return nil
-		}
+	idx, err := c.getIndex(oid)
+	if err != nil {
+		log.Info().Msgf("%s: %s", err.Error(), oid.String())
+		return nil
 	}
 
 	idx++
+
+	log.Debug().Msgf("getting index of %d", idx)
 
 	if idx < len(c.index) {
 		next := c.index[idx]
 		if v, ok := c.committed[next.String()]; ok {
 			return v
+		} else {
+			//
 		}
 	}
 
