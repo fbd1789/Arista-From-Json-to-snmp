@@ -1,16 +1,33 @@
 package main
 
+/*
+BaseOID: 1.3.6.1.4.1.30065.4.226
+
++-- bgpVrfAll(1)
+|   |
+|   +-- bgpVrfAllTable(1)
+|   |   |
+|   |   +-- bgpVrfAllEntry(1)
+|	|	|   | Index: [address][maskLen][nextHop][vrfName]
+|   |	|   |
+|   |   |   +-- String vrfName(1)
+|   |   |   |
+|   |   |   +-- IpAddress address(2)
+|   |   |   |
+|   |   |   +-- Integer maskLen int(3)
+|   |   |   |
+|   |   |   +-- IpAddress nextHop metric(4)
+
+*/
+
 import (
 	"bytes"
 	"context"
 	"encoding/asn1"
 	"encoding/json"
 	"fmt"
-	"io"
 	"log/syslog"
 	"net/netip"
-	"os"
-	"strconv"
 	"strings"
 	"time"
 
@@ -111,26 +128,23 @@ func encodeString(s string) []int {
 	return oid
 }
 
-func intsToString(a []int, sep string) string {
-	sliced := make([]string, len(a))
+// func intsToString(a []int, sep string) string {
+// 	sliced := make([]string, len(a))
+// 	for i, val := range a {
+// 		sliced[i] = strconv.Itoa(val)
+// 	}
+// 	return strings.Join(sliced, sep)
+// }
 
-	for i, val := range a {
-		sliced[i] = strconv.Itoa(val)
-	}
-	return strings.Join(sliced, sep)
-}
-
-func loadMockFile(d any, path string) error {
-	file, err := os.Open(path)
-	if err != nil {
-		return err
-	}
-	defer file.Close()
-
-	raw, _ := io.ReadAll(file)
-
-	return json.Unmarshal(raw, &d)
-}
+// func loadMockFile(d any, path string) error {
+// 	file, err := os.Open(path)
+// 	if err != nil {
+// 		return err
+// 	}
+// 	defer file.Close()
+// 	raw, _ := io.ReadAll(file)
+// 	return json.Unmarshal(raw, &d)
+// }
 
 func main() {
 
@@ -165,11 +179,11 @@ func main() {
 					idx = append(idx, encodeString(name)...)
 
 					// fmt.Printf("%s %s %s\n", name, prefix.String(), path.NextHop.String())
-					pp.AddString(append([]int{1, 1, 1}, idx...), intsToString(idx, "."))
-					pp.AddString(append([]int{1, 1, 2}, idx...), name)
-					pp.AddIP(append([]int{1, 1, 3}, idx...), prefix.Addr())
-					pp.AddInt(append([]int{1, 1, 4}, idx...), int32(prefix.Bits()))
-					pp.AddIP(append([]int{1, 1, 5}, idx...), path.NextHop.Addr)
+					//pp.AddString(append([]int{1, 1, 1}, idx...), intsToString(idx, "."))
+					pp.AddString(append([]int{1, 1, 1}, idx...), name)
+					pp.AddIP(append([]int{1, 1, 2}, idx...), prefix.Addr())
+					pp.AddInt(append([]int{1, 1, 3}, idx...), int32(prefix.Bits()))
+					pp.AddIP(append([]int{1, 1, 4}, idx...), path.NextHop.Addr)
 				}
 			}
 		}
