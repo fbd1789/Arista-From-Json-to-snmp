@@ -12,9 +12,9 @@ BaseOID: 1.3.6.1.4.1.30065.4.226
 |   |	|   |
 |   |   |   +-- String vrfName(1)
 |   |   |   |
-|   |   |   +-- IpAddress address(2)
+|   |   |   +-- IpAddress prefix(2)
 |   |   |   |
-|   |   |   +-- Integer maskLen int(3)
+|   |   |   +-- Integer prefixLen int(3)
 |   |   |   |
 |   |   |   +-- IpAddress nextHop metric(4)
 
