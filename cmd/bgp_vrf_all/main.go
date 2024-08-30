@@ -21,47 +21,17 @@ BaseOID: 1.3.6.1.4.1.30065.4.226
 */
 
 import (
-	"bytes"
 	"context"
 	"encoding/asn1"
-	"encoding/json"
-	"fmt"
 	"log/syslog"
 	"net/netip"
-	"strings"
 	"time"
 
 	"github.com/rs/zerolog/log"
 
 	"github.com/arista-northwest/go-passpersist/passpersist"
-	"github.com/go-cmd/cmd"
+	"github.com/arista-northwest/go-passpersist/utils/arista"
 )
-
-func eosCommand(command string) ([]string, error) {
-	c := cmd.NewCmd("Cli", "-p15", "-c", command)
-	c.Env = append(c.Env, "TERM=dumb")
-	<-c.Start()
-
-	stderr := c.Status().Stderr
-	if len(stderr) > 0 {
-		return []string{}, fmt.Errorf("%s", strings.Join(stderr, "\n"))
-	}
-
-	return c.Status().Stdout, nil
-}
-
-func eosCommandJson(command string, v any) error {
-	out, err := eosCommand(fmt.Sprintf("%s | json", command))
-	if err != nil {
-		return err
-	}
-	var buf bytes.Buffer
-	for _, l := range out {
-		buf.WriteString(l)
-	}
-
-	return json.Unmarshal(buf.Bytes(), v)
-}
 
 type IPAddress struct {
 	netip.Addr
@@ -159,7 +129,7 @@ func main() {
 	pp.Run(ctx, func(pp *passpersist.PassPersist) {
 		var data ShowBgpVrfAll
 		//err := loadMockFile(&data, "bgp_vrfs_all.json")
-		err := eosCommandJson("show ip bgp vrf all", &data)
+		err := arista.EosCommandJson("show ip bgp vrf all", &data)
 		if err != nil {
 			log.Error().Msgf("failed to read data: %s", err)
 			return
