@@ -744,7 +744,7 @@ func main() {
 
 			portId, err := strconv.Atoi(re.FindStringSubmatch(port)[1])
 			if err != nil {
-				// log error
+				log.Warn().Err(err).Msg("failed to patse cpu port")
 				continue
 			}
 

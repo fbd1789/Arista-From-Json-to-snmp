@@ -45,7 +45,7 @@ BaseOID: 1.3.6.1.4.1.8072.1.3.1.5
 # Build
 
 ```
-GOOS=linux go build -o cpu_counters_queue .
+GOOS=linux GOARCH=amd64 scpCGO_ENABLED=0 go build -o cpu_counters_queue .
 ```
 
 # Installation
