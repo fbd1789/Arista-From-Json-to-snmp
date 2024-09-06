@@ -40,6 +40,7 @@ package main
 
 import (
 	"context"
+	"log/syslog"
 	"regexp"
 	"strconv"
 	"time"
@@ -718,18 +719,18 @@ func main() {
 	// if err := json.Unmarshal(mockData, &data); err != nil {
 	// 	panic(err)
 	// }
-
+	passpersist.EnableSyslogLogger("warn", syslog.LOG_LOCAL4, "cpu_counters_queue_summary")
+	// passpersist.EnableConsoleLogger("debug")
 	err := arista.EosCommandJson("show cpu counters queue summary", &data)
 	if err != nil {
-		log.Error().Msgf("failed to read data: %s", err)
-		return
+		log.Fatal().Msgf("failed to read data: %s", err) //.Msgf("failed to read data: %s", err).Send()
 	}
 
 	baseOid := passpersist.MustNewOid(passpersist.NetSnmpExtendMib).MustAppend([]int{5})
 
 	cfg := passpersist.MustNewConfig(
 		passpersist.WithBaseOid(baseOid),
-		passpersist.WithRefreshInterval(time.Second),
+		passpersist.WithRefreshInterval(time.Second*30),
 	)
 	pp := passpersist.NewPassPersist(cfg)
 	ctx := context.Background()
@@ -737,7 +738,7 @@ func main() {
 	pp.Run(ctx, func(pp *passpersist.PassPersist) {
 
 		for port, queueTypes := range data.EgressQueues.Sources["all"].CpuPorts {
-			egressQueuesSummaryTable := passpersist.MustNewOid("1.1")
+			egressQueuesSummaryTable := []int{11, 1, 1}
 			re := regexp.MustCompile(`CpuTm(\d+)`)
 
 			portId, err := strconv.Atoi(re.FindStringSubmatch(port)[1])
@@ -750,34 +751,34 @@ func main() {
 				if queueTypeId, ok := queueTypeMap[queueType]; ok {
 					for q, counters := range queues.Queues {
 						queueId, _ := strconv.Atoi(q)
-						idx := []int{portId, queueTypeId, queueId}
+						//idx := []int{portId, queueTypeId, queueId}
 
 						pp.AddString(
-							egressQueuesSummaryTable.MustAppend([]int{1}).MustAppend(idx).Value,
+							append(egressQueuesSummaryTable, 1, portId, queueTypeId, queueId),
 							port,
 						)
 						pp.AddString(
-							egressQueuesSummaryTable.MustAppend([]int{2}).MustAppend(idx).Value,
+							append(egressQueuesSummaryTable, 2, portId, queueTypeId, queueId),
 							queueType,
 						)
 						pp.AddInt(
-							egressQueuesSummaryTable.MustAppend([]int{3}).MustAppend(idx).Value,
+							append(egressQueuesSummaryTable, 3, portId, queueTypeId, queueId),
 							int32(queueId),
 						)
 						pp.AddCounter64(
-							egressQueuesSummaryTable.MustAppend([]int{4}).MustAppend(idx).Value,
+							append(egressQueuesSummaryTable, 4, portId, queueTypeId, queueId),
 							uint64(counters.EnqueuedPackets),
 						)
 						pp.AddCounter64(
-							egressQueuesSummaryTable.MustAppend([]int{5}).MustAppend(idx).Value,
+							append(egressQueuesSummaryTable, 5, portId, queueTypeId, queueId),
 							uint64(counters.EnqueuedBytes),
 						)
 						pp.AddCounter64(
-							egressQueuesSummaryTable.MustAppend([]int{6}).MustAppend(idx).Value,
+							append(egressQueuesSummaryTable, 6, portId, queueTypeId, queueId),
 							uint64(counters.DroppedPackets),
 						)
 						pp.AddCounter64(
-							egressQueuesSummaryTable.MustAppend([]int{7}).MustAppend(idx).Value,
+							append(egressQueuesSummaryTable, 7, portId, queueTypeId, queueId),
 							uint64(counters.DroppedBytes),
 						)
 					}
@@ -785,15 +786,15 @@ func main() {
 			}
 		}
 		for coppClass, cpuClass := range data.IngressVoqs.Sources["all"].CpuClasses {
-			ingressVoqsSummaryTable := passpersist.MustNewOid("2.1")
+			ingressVoqsSummaryTable := []int{11, 2, 1}
 			counters := cpuClass.Ports[""]
 
 			if coppClassId, ok := coppClassMap[coppClass]; ok {
-				pp.AddString(ingressVoqsSummaryTable.MustAppend([]int{1, coppClassId}).Value, coppClass)
-				pp.AddCounter64(ingressVoqsSummaryTable.MustAppend([]int{2, coppClassId}).Value, uint64(counters.EnqueuedPackets))
-				pp.AddCounter64(ingressVoqsSummaryTable.MustAppend([]int{3, coppClassId}).Value, uint64(counters.EnqueuedBytes))
-				pp.AddCounter64(ingressVoqsSummaryTable.MustAppend([]int{4, coppClassId}).Value, uint64(counters.DroppedPackets))
-				pp.AddCounter64(ingressVoqsSummaryTable.MustAppend([]int{5, coppClassId}).Value, uint64(counters.DroppedBytes))
+				pp.AddString(append(ingressVoqsSummaryTable, 1, coppClassId), coppClass)
+				pp.AddCounter64(append(ingressVoqsSummaryTable, 1, coppClassId), uint64(counters.EnqueuedPackets))
+				pp.AddCounter64(append(ingressVoqsSummaryTable, 2, coppClassId), uint64(counters.EnqueuedBytes))
+				pp.AddCounter64(append(ingressVoqsSummaryTable, 3, coppClassId), uint64(counters.DroppedPackets))
+				pp.AddCounter64(append(ingressVoqsSummaryTable, 4, coppClassId), uint64(counters.DroppedBytes))
 			}
 		}
 	})
