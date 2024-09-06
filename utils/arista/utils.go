@@ -1,14 +1,20 @@
 package arista
 
 import (
+	"bufio"
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"os"
+	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
 
+	"github.com/arista-northwest/go-passpersist/passpersist"
 	"github.com/go-cmd/cmd"
+	"github.com/rs/zerolog/log"
 )
 
 func EosCommand(command string) ([]string, error) {
@@ -56,4 +62,35 @@ func GetIfIndexeMap() (map[string]int, error) {
 	}
 
 	return indexes, nil
+}
+
+func GetBaseOid() (passpersist.Oid, error) {
+	progName := filepath.Base(os.Args[0])
+
+	file, err := os.Open("/etc/snmp/snmpd.conf")
+	//file, err := os.Open("snmpd.conf")
+	if err != nil {
+		return passpersist.Oid{}, errors.New("failed to read snmpd configuration file")
+	}
+	defer file.Close()
+
+	re := regexp.MustCompile(`pass_persist (\.?[\.\d+]+) [\/\w+]*` + regexp.QuoteMeta(progName))
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		m := re.FindStringSubmatch(scanner.Text())
+		if len(m) > 0 {
+			return passpersist.MustNewOid(m[1]), nil
+		}
+
+	}
+	return passpersist.Oid{}, errors.New("extension not found in configutation")
+}
+
+func MustGetBaseOid() passpersist.Oid {
+	o, err := GetBaseOid()
+	if err != nil {
+		log.Fatal().Err(err).Msg("failed to get base OID")
+	}
+
+	return o
 }

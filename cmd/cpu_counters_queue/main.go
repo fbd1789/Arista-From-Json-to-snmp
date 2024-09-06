@@ -716,18 +716,19 @@ type CpuPortQueueCounters struct {
 
 func main() {
 	var data CpuCountersQueueSummary
+
+	passpersist.EnableSyslogLogger("warn", syslog.LOG_LOCAL4, "cpu_counters_queue_summary")
+	// passpersist.EnableConsoleLogger("debug")
+
 	// if err := json.Unmarshal(mockData, &data); err != nil {
 	// 	panic(err)
 	// }
-	passpersist.EnableSyslogLogger("warn", syslog.LOG_LOCAL4, "cpu_counters_queue_summary")
-	// passpersist.EnableConsoleLogger("debug")
-	err := arista.EosCommandJson("show cpu counters queue summary", &data)
-	if err != nil {
-		log.Fatal().Msgf("failed to read data: %s", err) //.Msgf("failed to read data: %s", err).Send()
+	if err := arista.EosCommandJson("show cpu counters queue summary", &data); err != nil {
+		log.Fatal().Err(err).Msg("failed to run eos command") //.Msgf("failed to read data: %s", err).Send()
 	}
 
-	baseOid := passpersist.MustNewOid(passpersist.NetSnmpExtendMib).MustAppend([]int{5})
-
+	//baseOid := passpersist.MustNewOid(passpersist.NetSnmpExtendMib).MustAppend([]int{5})
+	baseOid := arista.MustGetBaseOid()
 	cfg := passpersist.MustNewConfig(
 		passpersist.WithBaseOid(baseOid),
 		passpersist.WithRefreshInterval(time.Second*30),
