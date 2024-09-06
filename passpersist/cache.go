@@ -98,6 +98,7 @@ func (c *Cache) GetNext(oid Oid) *VarBind {
 	log.Debug().Msgf("getting next value after: %s", oid.String())
 
 	idx, err := c.getIndex(oid)
+	log.Debug().Msgf("got %s index at %d", oid.String(), idx)
 	if err != nil {
 		log.Info().Msgf("%s: %s", err.Error(), oid.String())
 		return nil

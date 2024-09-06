@@ -195,7 +195,9 @@ func (p *PassPersist) Run(ctx context.Context, f func(*PassPersist)) {
 				fmt.Println("PONG")
 			case "getnext":
 				inp := <-input
+				log.Debug().Msgf("validating: %s", inp)
 				if oid, ok := p.convertAndValidateOid(inp); ok {
+					log.Debug().Msgf("getNext: %+v", oid)
 					v := p.getNext(oid)
 					if v != nil {
 						fmt.Println(v.Marshal())
@@ -203,6 +205,7 @@ func (p *PassPersist) Run(ctx context.Context, f func(*PassPersist)) {
 						fmt.Println("NONE")
 					}
 				} else {
+					log.Debug().Msgf("failed to validate input: %s", inp)
 					fmt.Println("NONE")
 				}
 
@@ -268,6 +271,7 @@ func (p *PassPersist) convertAndValidateOid(oid string) (Oid, bool) {
 	o, err := NewOid(oid)
 
 	if err != nil {
+		log.Warn().Msgf("failed to load oid: %s", oid)
 		return Oid{}, false
 	}
 
