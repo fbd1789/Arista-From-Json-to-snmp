@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/arista-northwest/go-passpersist/passpersist"
+	"github.com/arista-northwest/go-passpersist/utils/arista"
 	"github.com/rs/zerolog/log"
 )
 
@@ -43,17 +44,23 @@ func main() {
 	defer cancel()
 
 	// global settings
-	passpersist.BaseOid, _ = passpersist.MustNewOid(passpersist.AristaExperimentalMib).Append([]int{224})
+	//passpersist.BaseOid, _ = passpersist.MustNewOid(passpersist.AristaExperimentalMib).Append([]int{224})
 	passpersist.EnableSyslogLogger("info", syslog.LOG_LOCAL4, "intf_tc_queue_counters")
 	// uncomment for debugging
 	// passpersist.EnableConsoleLogger("debug")
-	passpersist.RefreshInterval = 60 * time.Second
 
-	pp := passpersist.NewPassPersist()
+	oid := passpersist.MustNewOid(passpersist.AristaExperimentalMib).MustAppend([]int{224})
+	cfg := passpersist.MustNewConfig(passpersist.WithBaseOid(oid), passpersist.WithRefreshInterval(60*time.Second))
+	pp := passpersist.NewPassPersist(cfg)
 	pp.Run(ctx, func(pp *passpersist.PassPersist) {
 		var data InterfaceQueueCounters
-		idxs := getIfIndexeMap()
-		eosCommandJson("show interfaces counters queue", &data)
+		idxs, err := arista.GetIfIndexeMap()
+		if err != nil {
+			log.Warn().Msgf("failed to get ifIndex map. data not refreshed")
+			return
+		}
+
+		arista.EosCommandJson("show interfaces counters queue", &data)
 
 		for intf, idx := range idxs {
 			if tcs, ok := data.IngressVoqCounters.Interface[intf]; ok {
