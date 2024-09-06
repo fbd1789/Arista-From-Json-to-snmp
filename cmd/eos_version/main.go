@@ -2,8 +2,6 @@ package main
 
 import (
 	"context"
-	"encoding/json"
-	"fmt"
 	"log"
 	"log/syslog"
 	"net"
@@ -13,20 +11,20 @@ import (
 	"time"
 
 	"github.com/arista-northwest/go-passpersist/passpersist"
-	"github.com/go-cmd/cmd"
+	"github.com/arista-northwest/go-passpersist/utils/arista"
 )
 
-func EosCommand(command string) (string, error) {
-	c := cmd.NewCmd("Cli", "-p15", "-c", command)
-	c.Env = append(c.Env, "TERM=dumb")
-	<-c.Start()
+// func EosCommand(command string) (string, error) {
+// 	c := cmd.NewCmd("Cli", "-p15", "-c", command)
+// 	c.Env = append(c.Env, "TERM=dumb")
+// 	<-c.Start()
 
-	stderr := c.Status().Stderr
-	if len(stderr) > 0 {
-		return "", fmt.Errorf("%s", strings.Join(stderr, "\n"))
-	}
-	return strings.Join(c.Status().Stdout, "\n"), nil
-}
+// 	stderr := c.Status().Stderr
+// 	if len(stderr) > 0 {
+// 		return "", fmt.Errorf("%s", strings.Join(stderr, "\n"))
+// 	}
+// 	return strings.Join(c.Status().Stdout, "\n"), nil
+// }
 
 /*
 {
@@ -122,20 +120,22 @@ type ShowVersion struct {
 }
 
 func main() {
-	out, err := EosCommand("show version | json")
+	var data ShowVersion
+	err := arista.EosCommandJson("show version | json", data)
 	if err != nil {
 		log.Fatal(err)
 	}
-	text := []byte(out)
-	var data ShowVersion
-	json.Unmarshal(text, &data)
 
-	passpersist.BaseOid, _ = passpersist.MustNewOid(passpersist.AristaExperimentalMib).Append([]int{225})
-	passpersist.EnableSyslogLogger("info", syslog.LOG_LOCAL4, "intf_tc_queue_counters")
+	passpersist.EnableSyslogLogger("info", syslog.LOG_LOCAL4, "eos_version")
 	// uncomment for debugging
-	// passpersist.EnableConsoleLogger("debug")
-	passpersist.RefreshInterval = 10 * time.Second
-	pp := passpersist.NewPassPersist()
+	//passpersist.EnableConsoleLogger("debug")
+
+	oid := passpersist.MustNewOid(passpersist.AristaExperimentalMib).MustAppend([]int{225})
+	cfg := passpersist.MustNewConfig(
+		passpersist.WithBaseOid(oid),
+		passpersist.WithRefreshInterval(10*time.Second),
+	)
+	pp := passpersist.NewPassPersist(cfg)
 	ctx := context.Background()
 	pp.Run(ctx, func(pp *passpersist.PassPersist) {
 		pp.AddString([]int{255, 1}, data.Version)

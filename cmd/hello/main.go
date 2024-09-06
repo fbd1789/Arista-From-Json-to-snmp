@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"log/syslog"
 	"time"
 
 	"github.com/arista-northwest/go-passpersist/passpersist"
@@ -15,10 +14,16 @@ func main() {
 
 	//console logger breaks the passpersis protocol even though it writes to stderr
 	//passpersist.EnableConsoleLogger("debug")
-	passpersist.EnableSyslogLogger("debug", syslog.LOG_LOCAL4, "passpersist-hello")
-	passpersist.RefreshInterval = 60 * time.Second
+	//passpersist.EnableSyslogLogger("debug", syslog.LOG_LOCAL4, "passpersist-hello")
 
-	pp := passpersist.NewPassPersist()
+	oid := passpersist.MustNewOid(passpersist.NetSnmpExtendMib)
+
+	cfg := passpersist.MustNewConfig(
+		passpersist.WithBaseOid(oid),
+		passpersist.WithRefreshInterval(time.Second),
+	)
+
+	pp := passpersist.NewPassPersist(cfg)
 
 	pp.Run(ctx, func(pp *passpersist.PassPersist) {
 		pp.AddString([]int{0}, "Hello from PassPersist")

@@ -23,7 +23,6 @@ BaseOID: 1.3.6.1.4.1.30065.4.226
 import (
 	"context"
 	"encoding/asn1"
-	"log/syslog"
 	"net/netip"
 	"time"
 
@@ -118,13 +117,17 @@ func encodeString(s string) []int {
 
 func main() {
 
-	passpersist.BaseOid, _ = passpersist.MustNewOid(passpersist.AristaExperimentalMib).Append([]int{226})
-	passpersist.EnableSyslogLogger("info", syslog.LOG_LOCAL4, "bgp_vrfs_all")
+	//passpersist.BaseOid, _ = passpersist.MustNewOid(passpersist.AristaExperimentalMib).Append([]int{226})
+	// passpersist.EnableSyslogLogger("info", syslog.LOG_LOCAL4, "bgp_vrfs_all")
 	// uncomment for debugging
 	//passpersist.EnableConsoleLogger("debug")
-	passpersist.RefreshInterval = 180 * time.Second
-
-	pp := passpersist.NewPassPersist()
+	// passpersist.RefreshInterval = 180 * time.Second
+	oid := passpersist.MustNewOid(passpersist.AristaExperimentalMib).MustAppend([]int{226})
+	cfg := passpersist.MustNewConfig(
+		passpersist.WithBaseOid(oid),
+		passpersist.WithRefreshInterval(time.Second),
+	)
+	pp := passpersist.NewPassPersist(cfg)
 	ctx := context.Background()
 	pp.Run(ctx, func(pp *passpersist.PassPersist) {
 		var data ShowBgpVrfAll
