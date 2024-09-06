@@ -26,6 +26,11 @@ const (
 	// InconsistentValue
 )
 
+func init() {
+	// default to no logging
+	DisableLogging()
+}
+
 func (e SetError) String() string {
 	switch e {
 	case NotWriteable:
@@ -45,12 +50,14 @@ func (e SetError) String() string {
 }
 
 type PassPersist struct {
-	cache *Cache
+	cache  *Cache
+	config *Config
 }
 
-func NewPassPersist() *PassPersist {
+func NewPassPersist(config *Config) *PassPersist {
 	return &PassPersist{
-		cache: NewCache(),
+		cache:  NewCache(),
+		config: config,
 	}
 }
 
@@ -64,7 +71,7 @@ func (p *PassPersist) getNext(oid Oid) *VarBind {
 }
 
 func (p *PassPersist) AddEntry(subs []int, value typedValue) error {
-	oid, err := BaseOid.Append(subs)
+	oid, err := p.config.BaseOid.Append(subs)
 	if err != nil {
 		return err
 	}
@@ -127,8 +134,8 @@ func (p *PassPersist) AddTimeTicks(subIds []int, value time.Duration) error {
 func (p *PassPersist) Dump() {
 	out := make(map[string]interface{})
 
-	out["base-oid"] = BaseOid
-	out["refresh"] = RefreshInterval
+	out["base-oid"] = p.config.BaseOid
+	out["refresh"] = p.config.RefreshInterval
 
 	j, _ := json.MarshalIndent(out, "", "  ")
 	fmt.Println(string(j))
@@ -163,7 +170,7 @@ func (p *PassPersist) update(ctx context.Context, callback func(*PassPersist)) {
 		case <-ctx.Done():
 			return
 		default:
-			timer := time.NewTimer(RefreshInterval)
+			timer := time.NewTimer(p.config.RefreshInterval)
 
 			callback(p)
 			p.cache.Commit()
@@ -264,7 +271,7 @@ func (p *PassPersist) convertAndValidateOid(oid string) (Oid, bool) {
 		return Oid{}, false
 	}
 
-	if !o.Contains(BaseOid) {
+	if !o.Contains(p.config.BaseOid) {
 		return o, false
 	}
 
