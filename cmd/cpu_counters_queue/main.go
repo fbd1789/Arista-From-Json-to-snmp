@@ -50,576 +50,576 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-var mockData []byte = []byte(`{
-    "ingressVoqs": {
-        "sources": {
-            "all": {
-                "cpuClasses": {
-                    "CoppSystemAclLog": {
-                        "ports": {
-                            "": {
-                                "enqueuedPackets": 0,
-                                "enqueuedBytes": 0,
-                                "droppedPackets": 0,
-                                "droppedBytes": 0
-                            }
-                        }
-                    },
-                    "CoppSystemArpInspect": {
-                        "ports": {
-                            "": {
-                                "enqueuedPackets": 0,
-                                "enqueuedBytes": 0,
-                                "droppedPackets": 0,
-                                "droppedBytes": 0
-                            }
-                        }
-                    },
-                    "CoppSystemBfd": {
-                        "ports": {
-                            "": {
-                                "enqueuedPackets": 5148989859,
-                                "enqueuedBytes": 411917216190,
-                                "droppedPackets": 0,
-                                "droppedBytes": 0
-                            }
-                        }
-                    },
-                    "CoppSystemBgp": {
-                        "ports": {
-                            "": {
-                                "enqueuedPackets": 55720589,
-                                "enqueuedBytes": 4945362015,
-                                "droppedPackets": 0,
-                                "droppedBytes": 0
-                            }
-                        }
-                    },
-                    "CoppSystemBpdu": {
-                        "ports": {
-                            "": {
-                                "enqueuedPackets": 568901,
-                                "enqueuedBytes": 69974823,
-                                "droppedPackets": 0,
-                                "droppedBytes": 0
-                            }
-                        }
-                    },
-                    "CoppSystemCfm": {
-                        "ports": {
-                            "": {
-                                "enqueuedPackets": 0,
-                                "enqueuedBytes": 0,
-                                "droppedPackets": 0,
-                                "droppedBytes": 0
-                            }
-                        }
-                    },
-                    "CoppSystemCvx": {
-                        "ports": {
-                            "": {
-                                "enqueuedPackets": 0,
-                                "enqueuedBytes": 0,
-                                "droppedPackets": 0,
-                                "droppedBytes": 0
-                            }
-                        }
-                    },
-                    "CoppSystemCvxHeartbeat": {
-                        "ports": {
-                            "": {
-                                "enqueuedPackets": 0,
-                                "enqueuedBytes": 0,
-                                "droppedPackets": 0,
-                                "droppedBytes": 0
-                            }
-                        }
-                    },
-                    "CoppSystemDot1xMba": {
-                        "ports": {
-                            "": {
-                                "enqueuedPackets": 0,
-                                "enqueuedBytes": 0,
-                                "droppedPackets": 0,
-                                "droppedBytes": 0
-                            }
-                        }
-                    },
-                    "CoppSystemEgressTrap": {
-                        "ports": {
-                            "": {
-                                "enqueuedPackets": 46,
-                                "enqueuedBytes": 421084,
-                                "droppedPackets": 0,
-                                "droppedBytes": 0
-                            }
-                        }
-                    },
-                    "CoppSystemIgmp": {
-                        "ports": {
-                            "": {
-                                "enqueuedPackets": 0,
-                                "enqueuedBytes": 0,
-                                "droppedPackets": 0,
-                                "droppedBytes": 0
-                            }
-                        }
-                    },
-                    "CoppSystemIpBcast": {
-                        "ports": {
-                            "": {
-                                "enqueuedPackets": 0,
-                                "enqueuedBytes": 0,
-                                "droppedPackets": 0,
-                                "droppedBytes": 0
-                            }
-                        }
-                    },
-                    "CoppSystemIpUcast": {
-                        "ports": {
-                            "": {
-                                "enqueuedPackets": 5806,
-                                "enqueuedBytes": 763382,
-                                "droppedPackets": 0,
-                                "droppedBytes": 0
-                            }
-                        }
-                    },
-                    "CoppSystemL2Ucast": {
-                        "ports": {
-                            "": {
-                                "enqueuedPackets": 433,
-                                "enqueuedBytes": 28272,
-                                "droppedPackets": 0,
-                                "droppedBytes": 0
-                            }
-                        }
-                    },
-                    "CoppSystemL3DstMiss": {
-                        "ports": {
-                            "": {
-                                "enqueuedPackets": 35069,
-                                "enqueuedBytes": 2455974,
-                                "droppedPackets": 0,
-                                "droppedBytes": 0
-                            }
-                        }
-                    },
-                    "CoppSystemL3LpmOverflow": {
-                        "ports": {
-                            "": {
-                                "enqueuedPackets": 21891682,
-                                "enqueuedBytes": 7221330550,
-                                "droppedPackets": 666721257115,
-                                "droppedBytes": 289471421816285
-                            }
-                        }
-                    },
-                    "CoppSystemL3Ttl1IpOptUcast": {
-                        "ports": {
-                            "": {
-                                "enqueuedPackets": 21,
-                                "enqueuedBytes": 15855,
-                                "droppedPackets": 0,
-                                "droppedBytes": 0
-                            }
-                        }
-                    },
-                    "CoppSystemLacp": {
-                        "ports": {
-                            "": {
-                                "enqueuedPackets": 13292468,
-                                "enqueuedBytes": 2233190162,
-                                "droppedPackets": 0,
-                                "droppedBytes": 0
-                            }
-                        }
-                    },
-                    "CoppSystemLdp": {
-                        "ports": {
-                            "": {
-                                "enqueuedPackets": 0,
-                                "enqueuedBytes": 0,
-                                "droppedPackets": 0,
-                                "droppedBytes": 0
-                            }
-                        }
-                    },
-                    "CoppSystemLldp": {
-                        "ports": {
-                            "": {
-                                "enqueuedPackets": 465123,
-                                "enqueuedBytes": 107461750,
-                                "droppedPackets": 0,
-                                "droppedBytes": 0
-                            }
-                        }
-                    },
-                    "CoppSystemMirroring": {
-                        "ports": {
-                            "": {
-                                "enqueuedPackets": 0,
-                                "enqueuedBytes": 0,
-                                "droppedPackets": 0,
-                                "droppedBytes": 0
-                            }
-                        }
-                    },
-                    "CoppSystemMlag": {
-                        "ports": {
-                            "": {
-                                "enqueuedPackets": 0,
-                                "enqueuedBytes": 0,
-                                "droppedPackets": 0,
-                                "droppedBytes": 0
-                            }
-                        }
-                    },
-                    "CoppSystemMplsArpSuppress": {
-                        "ports": {
-                            "": {
-                                "enqueuedPackets": 0,
-                                "enqueuedBytes": 0,
-                                "droppedPackets": 0,
-                                "droppedBytes": 0
-                            }
-                        }
-                    },
-                    "CoppSystemMplsLabelMiss": {
-                        "ports": {
-                            "": {
-                                "enqueuedPackets": 287967773,
-                                "enqueuedBytes": 24189250782,
-                                "droppedPackets": 0,
-                                "droppedBytes": 0
-                            }
-                        }
-                    },
-                    "CoppSystemMplsTtl": {
-                        "ports": {
-                            "": {
-                                "enqueuedPackets": 52,
-                                "enqueuedBytes": 6084,
-                                "droppedPackets": 0,
-                                "droppedBytes": 0
-                            }
-                        }
-                    },
-                    "CoppSystemMvrp": {
-                        "ports": {
-                            "": {
-                                "enqueuedPackets": 0,
-                                "enqueuedBytes": 0,
-                                "droppedPackets": 0,
-                                "droppedBytes": 0
-                            }
-                        }
-                    },
-                    "CoppSystemOspfIsisUcast": {
-                        "ports": {
-                            "": {
-                                "enqueuedPackets": 0,
-                                "enqueuedBytes": 0,
-                                "droppedPackets": 0,
-                                "droppedBytes": 0
-                            }
-                        }
-                    },
-                    "CoppSystemPtp": {
-                        "ports": {
-                            "": {
-                                "enqueuedPackets": 0,
-                                "enqueuedBytes": 0,
-                                "droppedPackets": 0,
-                                "droppedBytes": 0
-                            }
-                        }
-                    },
-                    "CoppSystemRsvp": {
-                        "ports": {
-                            "": {
-                                "enqueuedPackets": 0,
-                                "enqueuedBytes": 0,
-                                "droppedPackets": 0,
-                                "droppedBytes": 0
-                            }
-                        }
-                    },
-                    "CoppSystemSflow": {
-                        "ports": {
-                            "": {
-                                "enqueuedPackets": 377781439,
-                                "enqueuedBytes": 147345806718,
-                                "droppedPackets": 0,
-                                "droppedBytes": 0
-                            }
-                        }
-                    },
-                    "CoppSystemDefault": {
-                        "ports": {
-                            "": {
-                                "enqueuedPackets": 0,
-                                "enqueuedBytes": 0,
-                                "droppedPackets": 0,
-                                "droppedBytes": 0
-                            }
-                        }
-                    },
-                    "CoppSystemCfmSnoop": {
-                        "ports": {
-                            "": {
-                                "enqueuedPackets": 0,
-                                "enqueuedBytes": 0,
-                                "droppedPackets": 0,
-                                "droppedBytes": 0
-                            }
-                        }
-                    },
-                    "CoppSystemIpMcast": {
-                        "ports": {
-                            "": {
-                                "enqueuedPackets": 0,
-                                "enqueuedBytes": 0,
-                                "droppedPackets": 0,
-                                "droppedBytes": 0
-                            }
-                        }
-                    },
-                    "CoppSystemIpMcastMiss": {
-                        "ports": {
-                            "": {
-                                "enqueuedPackets": 0,
-                                "enqueuedBytes": 0,
-                                "droppedPackets": 0,
-                                "droppedBytes": 0
-                            }
-                        }
-                    },
-                    "CoppSystemL2Bcast": {
-                        "ports": {
-                            "": {
-                                "enqueuedPackets": 635,
-                                "enqueuedBytes": 50286,
-                                "droppedPackets": 0,
-                                "droppedBytes": 0
-                            }
-                        }
-                    },
-                    "CoppSystemL3Ttl1IpOptions": {
-                        "ports": {
-                            "": {
-                                "enqueuedPackets": 94,
-                                "enqueuedBytes": 17136,
-                                "droppedPackets": 0,
-                                "droppedBytes": 0
-                            }
-                        }
-                    },
-                    "CoppSystemLinkLocal": {
-                        "ports": {
-                            "": {
-                                "enqueuedPackets": 23042,
-                                "enqueuedBytes": 2731208,
-                                "droppedPackets": 0,
-                                "droppedBytes": 0
-                            }
-                        }
-                    },
-                    "CoppSystemMulticastSnoop": {
-                        "ports": {
-                            "": {
-                                "enqueuedPackets": 0,
-                                "enqueuedBytes": 0,
-                                "droppedPackets": 0,
-                                "droppedBytes": 0
-                            }
-                        }
-                    },
-                    "CoppSystemOspfIsis": {
-                        "ports": {
-                            "": {
-                                "enqueuedPackets": 27373738,
-                                "enqueuedBytes": 32012217128,
-                                "droppedPackets": 0,
-                                "droppedBytes": 0
-                            }
-                        }
-                    },
-                    "CoppSystemPtpSnoop": {
-                        "ports": {
-                            "": {
-                                "enqueuedPackets": 0,
-                                "enqueuedBytes": 0,
-                                "droppedPackets": 0,
-                                "droppedBytes": 0
-                            }
-                        }
-                    },
-                    "CoppSystemVxlanEncap": {
-                        "ports": {
-                            "": {
-                                "enqueuedPackets": 0,
-                                "enqueuedBytes": 0,
-                                "droppedPackets": 0,
-                                "droppedBytes": 0
-                            }
-                        }
-                    },
-                    "CoppSystemVxlanVtepLearn": {
-                        "ports": {
-                            "": {
-                                "enqueuedPackets": 0,
-                                "enqueuedBytes": 0,
-                                "droppedPackets": 0,
-                                "droppedBytes": 0
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    },
-    "egressQueues": {
-        "sources": {
-            "all": {
-                "cpuPorts": {
-                    "CpuTm0": {
-                        "ucastQueues": {
-                            "queues": {
-                                "0": {
-                                    "enqueuedPackets": 5934124280,
-                                    "enqueuedBytes": 630109626676,
-                                    "droppedPackets": 0,
-                                    "droppedBytes": 0
-                                }
-                            }
-                        },
-                        "mcastQueues": {
-                            "queues": {
-                                "0": {
-                                    "enqueuedPackets": 0,
-                                    "enqueuedBytes": 0,
-                                    "droppedPackets": 0,
-                                    "droppedBytes": 0
-                                }
-                            }
-                        }
-                    },
-                    "CpuTm1": {
-                        "ucastQueues": {
-                            "queues": {
-                                "0": {
-                                    "enqueuedPackets": 0,
-                                    "enqueuedBytes": 0,
-                                    "droppedPackets": 0,
-                                    "droppedBytes": 0
-                                }
-                            }
-                        },
-                        "mcastQueues": {
-                            "queues": {
-                                "0": {
-                                    "enqueuedPackets": 0,
-                                    "enqueuedBytes": 0,
-                                    "droppedPackets": 0,
-                                    "droppedBytes": 0
-                                }
-                            }
-                        }
-                    },
-                    "CpuTm2": {
-                        "ucastQueues": {
-                            "queues": {
-                                "0": {
-                                    "enqueuedPackets": 0,
-                                    "enqueuedBytes": 0,
-                                    "droppedPackets": 0,
-                                    "droppedBytes": 0
-                                }
-                            }
-                        },
-                        "mcastQueues": {
-                            "queues": {
-                                "0": {
-                                    "enqueuedPackets": 0,
-                                    "enqueuedBytes": 0,
-                                    "droppedPackets": 0,
-                                    "droppedBytes": 0
-                                }
-                            }
-                        }
-                    },
-                    "CpuTm3": {
-                        "ucastQueues": {
-                            "queues": {
-                                "0": {
-                                    "enqueuedPackets": 0,
-                                    "enqueuedBytes": 0,
-                                    "droppedPackets": 0,
-                                    "droppedBytes": 0
-                                }
-                            }
-                        },
-                        "mcastQueues": {
-                            "queues": {
-                                "0": {
-                                    "enqueuedPackets": 0,
-                                    "enqueuedBytes": 0,
-                                    "droppedPackets": 0,
-                                    "droppedBytes": 0
-                                }
-                            }
-                        }
-                    },
-                    "CpuTm4": {
-                        "ucastQueues": {
-                            "queues": {
-                                "0": {
-                                    "enqueuedPackets": 0,
-                                    "enqueuedBytes": 0,
-                                    "droppedPackets": 0,
-                                    "droppedBytes": 0
-                                }
-                            }
-                        },
-                        "mcastQueues": {
-                            "queues": {
-                                "0": {
-                                    "enqueuedPackets": 0,
-                                    "enqueuedBytes": 0,
-                                    "droppedPackets": 0,
-                                    "droppedBytes": 0
-                                }
-                            }
-                        }
-                    },
-                    "CpuTm5": {
-                        "ucastQueues": {
-                            "queues": {
-                                "0": {
-                                    "enqueuedPackets": 0,
-                                    "enqueuedBytes": 0,
-                                    "droppedPackets": 0,
-                                    "droppedBytes": 0
-                                }
-                            }
-                        },
-                        "mcastQueues": {
-                            "queues": {
-                                "0": {
-                                    "enqueuedPackets": 0,
-                                    "enqueuedBytes": 0,
-                                    "droppedPackets": 0,
-                                    "droppedBytes": 0
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-}`)
+// var mockData []byte = []byte(`{
+//     "ingressVoqs": {
+//         "sources": {
+//             "all": {
+//                 "cpuClasses": {
+//                     "CoppSystemAclLog": {
+//                         "ports": {
+//                             "": {
+//                                 "enqueuedPackets": 0,
+//                                 "enqueuedBytes": 0,
+//                                 "droppedPackets": 0,
+//                                 "droppedBytes": 0
+//                             }
+//                         }
+//                     },
+//                     "CoppSystemArpInspect": {
+//                         "ports": {
+//                             "": {
+//                                 "enqueuedPackets": 0,
+//                                 "enqueuedBytes": 0,
+//                                 "droppedPackets": 0,
+//                                 "droppedBytes": 0
+//                             }
+//                         }
+//                     },
+//                     "CoppSystemBfd": {
+//                         "ports": {
+//                             "": {
+//                                 "enqueuedPackets": 5148989859,
+//                                 "enqueuedBytes": 411917216190,
+//                                 "droppedPackets": 0,
+//                                 "droppedBytes": 0
+//                             }
+//                         }
+//                     },
+//                     "CoppSystemBgp": {
+//                         "ports": {
+//                             "": {
+//                                 "enqueuedPackets": 55720589,
+//                                 "enqueuedBytes": 4945362015,
+//                                 "droppedPackets": 0,
+//                                 "droppedBytes": 0
+//                             }
+//                         }
+//                     },
+//                     "CoppSystemBpdu": {
+//                         "ports": {
+//                             "": {
+//                                 "enqueuedPackets": 568901,
+//                                 "enqueuedBytes": 69974823,
+//                                 "droppedPackets": 0,
+//                                 "droppedBytes": 0
+//                             }
+//                         }
+//                     },
+//                     "CoppSystemCfm": {
+//                         "ports": {
+//                             "": {
+//                                 "enqueuedPackets": 0,
+//                                 "enqueuedBytes": 0,
+//                                 "droppedPackets": 0,
+//                                 "droppedBytes": 0
+//                             }
+//                         }
+//                     },
+//                     "CoppSystemCvx": {
+//                         "ports": {
+//                             "": {
+//                                 "enqueuedPackets": 0,
+//                                 "enqueuedBytes": 0,
+//                                 "droppedPackets": 0,
+//                                 "droppedBytes": 0
+//                             }
+//                         }
+//                     },
+//                     "CoppSystemCvxHeartbeat": {
+//                         "ports": {
+//                             "": {
+//                                 "enqueuedPackets": 0,
+//                                 "enqueuedBytes": 0,
+//                                 "droppedPackets": 0,
+//                                 "droppedBytes": 0
+//                             }
+//                         }
+//                     },
+//                     "CoppSystemDot1xMba": {
+//                         "ports": {
+//                             "": {
+//                                 "enqueuedPackets": 0,
+//                                 "enqueuedBytes": 0,
+//                                 "droppedPackets": 0,
+//                                 "droppedBytes": 0
+//                             }
+//                         }
+//                     },
+//                     "CoppSystemEgressTrap": {
+//                         "ports": {
+//                             "": {
+//                                 "enqueuedPackets": 46,
+//                                 "enqueuedBytes": 421084,
+//                                 "droppedPackets": 0,
+//                                 "droppedBytes": 0
+//                             }
+//                         }
+//                     },
+//                     "CoppSystemIgmp": {
+//                         "ports": {
+//                             "": {
+//                                 "enqueuedPackets": 0,
+//                                 "enqueuedBytes": 0,
+//                                 "droppedPackets": 0,
+//                                 "droppedBytes": 0
+//                             }
+//                         }
+//                     },
+//                     "CoppSystemIpBcast": {
+//                         "ports": {
+//                             "": {
+//                                 "enqueuedPackets": 0,
+//                                 "enqueuedBytes": 0,
+//                                 "droppedPackets": 0,
+//                                 "droppedBytes": 0
+//                             }
+//                         }
+//                     },
+//                     "CoppSystemIpUcast": {
+//                         "ports": {
+//                             "": {
+//                                 "enqueuedPackets": 5806,
+//                                 "enqueuedBytes": 763382,
+//                                 "droppedPackets": 0,
+//                                 "droppedBytes": 0
+//                             }
+//                         }
+//                     },
+//                     "CoppSystemL2Ucast": {
+//                         "ports": {
+//                             "": {
+//                                 "enqueuedPackets": 433,
+//                                 "enqueuedBytes": 28272,
+//                                 "droppedPackets": 0,
+//                                 "droppedBytes": 0
+//                             }
+//                         }
+//                     },
+//                     "CoppSystemL3DstMiss": {
+//                         "ports": {
+//                             "": {
+//                                 "enqueuedPackets": 35069,
+//                                 "enqueuedBytes": 2455974,
+//                                 "droppedPackets": 0,
+//                                 "droppedBytes": 0
+//                             }
+//                         }
+//                     },
+//                     "CoppSystemL3LpmOverflow": {
+//                         "ports": {
+//                             "": {
+//                                 "enqueuedPackets": 21891682,
+//                                 "enqueuedBytes": 7221330550,
+//                                 "droppedPackets": 666721257115,
+//                                 "droppedBytes": 289471421816285
+//                             }
+//                         }
+//                     },
+//                     "CoppSystemL3Ttl1IpOptUcast": {
+//                         "ports": {
+//                             "": {
+//                                 "enqueuedPackets": 21,
+//                                 "enqueuedBytes": 15855,
+//                                 "droppedPackets": 0,
+//                                 "droppedBytes": 0
+//                             }
+//                         }
+//                     },
+//                     "CoppSystemLacp": {
+//                         "ports": {
+//                             "": {
+//                                 "enqueuedPackets": 13292468,
+//                                 "enqueuedBytes": 2233190162,
+//                                 "droppedPackets": 0,
+//                                 "droppedBytes": 0
+//                             }
+//                         }
+//                     },
+//                     "CoppSystemLdp": {
+//                         "ports": {
+//                             "": {
+//                                 "enqueuedPackets": 0,
+//                                 "enqueuedBytes": 0,
+//                                 "droppedPackets": 0,
+//                                 "droppedBytes": 0
+//                             }
+//                         }
+//                     },
+//                     "CoppSystemLldp": {
+//                         "ports": {
+//                             "": {
+//                                 "enqueuedPackets": 465123,
+//                                 "enqueuedBytes": 107461750,
+//                                 "droppedPackets": 0,
+//                                 "droppedBytes": 0
+//                             }
+//                         }
+//                     },
+//                     "CoppSystemMirroring": {
+//                         "ports": {
+//                             "": {
+//                                 "enqueuedPackets": 0,
+//                                 "enqueuedBytes": 0,
+//                                 "droppedPackets": 0,
+//                                 "droppedBytes": 0
+//                             }
+//                         }
+//                     },
+//                     "CoppSystemMlag": {
+//                         "ports": {
+//                             "": {
+//                                 "enqueuedPackets": 0,
+//                                 "enqueuedBytes": 0,
+//                                 "droppedPackets": 0,
+//                                 "droppedBytes": 0
+//                             }
+//                         }
+//                     },
+//                     "CoppSystemMplsArpSuppress": {
+//                         "ports": {
+//                             "": {
+//                                 "enqueuedPackets": 0,
+//                                 "enqueuedBytes": 0,
+//                                 "droppedPackets": 0,
+//                                 "droppedBytes": 0
+//                             }
+//                         }
+//                     },
+//                     "CoppSystemMplsLabelMiss": {
+//                         "ports": {
+//                             "": {
+//                                 "enqueuedPackets": 287967773,
+//                                 "enqueuedBytes": 24189250782,
+//                                 "droppedPackets": 0,
+//                                 "droppedBytes": 0
+//                             }
+//                         }
+//                     },
+//                     "CoppSystemMplsTtl": {
+//                         "ports": {
+//                             "": {
+//                                 "enqueuedPackets": 52,
+//                                 "enqueuedBytes": 6084,
+//                                 "droppedPackets": 0,
+//                                 "droppedBytes": 0
+//                             }
+//                         }
+//                     },
+//                     "CoppSystemMvrp": {
+//                         "ports": {
+//                             "": {
+//                                 "enqueuedPackets": 0,
+//                                 "enqueuedBytes": 0,
+//                                 "droppedPackets": 0,
+//                                 "droppedBytes": 0
+//                             }
+//                         }
+//                     },
+//                     "CoppSystemOspfIsisUcast": {
+//                         "ports": {
+//                             "": {
+//                                 "enqueuedPackets": 0,
+//                                 "enqueuedBytes": 0,
+//                                 "droppedPackets": 0,
+//                                 "droppedBytes": 0
+//                             }
+//                         }
+//                     },
+//                     "CoppSystemPtp": {
+//                         "ports": {
+//                             "": {
+//                                 "enqueuedPackets": 0,
+//                                 "enqueuedBytes": 0,
+//                                 "droppedPackets": 0,
+//                                 "droppedBytes": 0
+//                             }
+//                         }
+//                     },
+//                     "CoppSystemRsvp": {
+//                         "ports": {
+//                             "": {
+//                                 "enqueuedPackets": 0,
+//                                 "enqueuedBytes": 0,
+//                                 "droppedPackets": 0,
+//                                 "droppedBytes": 0
+//                             }
+//                         }
+//                     },
+//                     "CoppSystemSflow": {
+//                         "ports": {
+//                             "": {
+//                                 "enqueuedPackets": 377781439,
+//                                 "enqueuedBytes": 147345806718,
+//                                 "droppedPackets": 0,
+//                                 "droppedBytes": 0
+//                             }
+//                         }
+//                     },
+//                     "CoppSystemDefault": {
+//                         "ports": {
+//                             "": {
+//                                 "enqueuedPackets": 0,
+//                                 "enqueuedBytes": 0,
+//                                 "droppedPackets": 0,
+//                                 "droppedBytes": 0
+//                             }
+//                         }
+//                     },
+//                     "CoppSystemCfmSnoop": {
+//                         "ports": {
+//                             "": {
+//                                 "enqueuedPackets": 0,
+//                                 "enqueuedBytes": 0,
+//                                 "droppedPackets": 0,
+//                                 "droppedBytes": 0
+//                             }
+//                         }
+//                     },
+//                     "CoppSystemIpMcast": {
+//                         "ports": {
+//                             "": {
+//                                 "enqueuedPackets": 0,
+//                                 "enqueuedBytes": 0,
+//                                 "droppedPackets": 0,
+//                                 "droppedBytes": 0
+//                             }
+//                         }
+//                     },
+//                     "CoppSystemIpMcastMiss": {
+//                         "ports": {
+//                             "": {
+//                                 "enqueuedPackets": 0,
+//                                 "enqueuedBytes": 0,
+//                                 "droppedPackets": 0,
+//                                 "droppedBytes": 0
+//                             }
+//                         }
+//                     },
+//                     "CoppSystemL2Bcast": {
+//                         "ports": {
+//                             "": {
+//                                 "enqueuedPackets": 635,
+//                                 "enqueuedBytes": 50286,
+//                                 "droppedPackets": 0,
+//                                 "droppedBytes": 0
+//                             }
+//                         }
+//                     },
+//                     "CoppSystemL3Ttl1IpOptions": {
+//                         "ports": {
+//                             "": {
+//                                 "enqueuedPackets": 94,
+//                                 "enqueuedBytes": 17136,
+//                                 "droppedPackets": 0,
+//                                 "droppedBytes": 0
+//                             }
+//                         }
+//                     },
+//                     "CoppSystemLinkLocal": {
+//                         "ports": {
+//                             "": {
+//                                 "enqueuedPackets": 23042,
+//                                 "enqueuedBytes": 2731208,
+//                                 "droppedPackets": 0,
+//                                 "droppedBytes": 0
+//                             }
+//                         }
+//                     },
+//                     "CoppSystemMulticastSnoop": {
+//                         "ports": {
+//                             "": {
+//                                 "enqueuedPackets": 0,
+//                                 "enqueuedBytes": 0,
+//                                 "droppedPackets": 0,
+//                                 "droppedBytes": 0
+//                             }
+//                         }
+//                     },
+//                     "CoppSystemOspfIsis": {
+//                         "ports": {
+//                             "": {
+//                                 "enqueuedPackets": 27373738,
+//                                 "enqueuedBytes": 32012217128,
+//                                 "droppedPackets": 0,
+//                                 "droppedBytes": 0
+//                             }
+//                         }
+//                     },
+//                     "CoppSystemPtpSnoop": {
+//                         "ports": {
+//                             "": {
+//                                 "enqueuedPackets": 0,
+//                                 "enqueuedBytes": 0,
+//                                 "droppedPackets": 0,
+//                                 "droppedBytes": 0
+//                             }
+//                         }
+//                     },
+//                     "CoppSystemVxlanEncap": {
+//                         "ports": {
+//                             "": {
+//                                 "enqueuedPackets": 0,
+//                                 "enqueuedBytes": 0,
+//                                 "droppedPackets": 0,
+//                                 "droppedBytes": 0
+//                             }
+//                         }
+//                     },
+//                     "CoppSystemVxlanVtepLearn": {
+//                         "ports": {
+//                             "": {
+//                                 "enqueuedPackets": 0,
+//                                 "enqueuedBytes": 0,
+//                                 "droppedPackets": 0,
+//                                 "droppedBytes": 0
+//                             }
+//                         }
+//                     }
+//                 }
+//             }
+//         }
+//     },
+//     "egressQueues": {
+//         "sources": {
+//             "all": {
+//                 "cpuPorts": {
+//                     "CpuTm0": {
+//                         "ucastQueues": {
+//                             "queues": {
+//                                 "0": {
+//                                     "enqueuedPackets": 5934124280,
+//                                     "enqueuedBytes": 630109626676,
+//                                     "droppedPackets": 0,
+//                                     "droppedBytes": 0
+//                                 }
+//                             }
+//                         },
+//                         "mcastQueues": {
+//                             "queues": {
+//                                 "0": {
+//                                     "enqueuedPackets": 0,
+//                                     "enqueuedBytes": 0,
+//                                     "droppedPackets": 0,
+//                                     "droppedBytes": 0
+//                                 }
+//                             }
+//                         }
+//                     },
+//                     "CpuTm1": {
+//                         "ucastQueues": {
+//                             "queues": {
+//                                 "0": {
+//                                     "enqueuedPackets": 0,
+//                                     "enqueuedBytes": 0,
+//                                     "droppedPackets": 0,
+//                                     "droppedBytes": 0
+//                                 }
+//                             }
+//                         },
+//                         "mcastQueues": {
+//                             "queues": {
+//                                 "0": {
+//                                     "enqueuedPackets": 0,
+//                                     "enqueuedBytes": 0,
+//                                     "droppedPackets": 0,
+//                                     "droppedBytes": 0
+//                                 }
+//                             }
+//                         }
+//                     },
+//                     "CpuTm2": {
+//                         "ucastQueues": {
+//                             "queues": {
+//                                 "0": {
+//                                     "enqueuedPackets": 0,
+//                                     "enqueuedBytes": 0,
+//                                     "droppedPackets": 0,
+//                                     "droppedBytes": 0
+//                                 }
+//                             }
+//                         },
+//                         "mcastQueues": {
+//                             "queues": {
+//                                 "0": {
+//                                     "enqueuedPackets": 0,
+//                                     "enqueuedBytes": 0,
+//                                     "droppedPackets": 0,
+//                                     "droppedBytes": 0
+//                                 }
+//                             }
+//                         }
+//                     },
+//                     "CpuTm3": {
+//                         "ucastQueues": {
+//                             "queues": {
+//                                 "0": {
+//                                     "enqueuedPackets": 0,
+//                                     "enqueuedBytes": 0,
+//                                     "droppedPackets": 0,
+//                                     "droppedBytes": 0
+//                                 }
+//                             }
+//                         },
+//                         "mcastQueues": {
+//                             "queues": {
+//                                 "0": {
+//                                     "enqueuedPackets": 0,
+//                                     "enqueuedBytes": 0,
+//                                     "droppedPackets": 0,
+//                                     "droppedBytes": 0
+//                                 }
+//                             }
+//                         }
+//                     },
+//                     "CpuTm4": {
+//                         "ucastQueues": {
+//                             "queues": {
+//                                 "0": {
+//                                     "enqueuedPackets": 0,
+//                                     "enqueuedBytes": 0,
+//                                     "droppedPackets": 0,
+//                                     "droppedBytes": 0
+//                                 }
+//                             }
+//                         },
+//                         "mcastQueues": {
+//                             "queues": {
+//                                 "0": {
+//                                     "enqueuedPackets": 0,
+//                                     "enqueuedBytes": 0,
+//                                     "droppedPackets": 0,
+//                                     "droppedBytes": 0
+//                                 }
+//                             }
+//                         }
+//                     },
+//                     "CpuTm5": {
+//                         "ucastQueues": {
+//                             "queues": {
+//                                 "0": {
+//                                     "enqueuedPackets": 0,
+//                                     "enqueuedBytes": 0,
+//                                     "droppedPackets": 0,
+//                                     "droppedBytes": 0
+//                                 }
+//                             }
+//                         },
+//                         "mcastQueues": {
+//                             "queues": {
+//                                 "0": {
+//                                     "enqueuedPackets": 0,
+//                                     "enqueuedBytes": 0,
+//                                     "droppedPackets": 0,
+//                                     "droppedBytes": 0
+//                                 }
+//                             }
+//                         }
+//                     }
+//                 }
+//             }
+//         }
+//     }
+// }`)
 
 var coppClassMap map[string]int = map[string]int{
 	"CoppSystemAclLog":           1,
