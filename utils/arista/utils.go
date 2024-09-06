@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"regexp"
+	"strconv"
 	"strings"
 
 	"github.com/go-cmd/cmd"
@@ -33,4 +35,25 @@ func EosCommandJson(command string, v any) error {
 	}
 
 	return json.Unmarshal(buf.Bytes(), v)
+}
+
+func GetIfIndexeMap() (map[string]int, error) {
+	indexes := make(map[string]int)
+	out, err := EosCommand("show snmp mib walk IF-MIB::ifDescr")
+	if err != nil {
+		return nil, err
+	}
+
+	for _, l := range out {
+		re := regexp.MustCompile(`IF-MIB::ifDescr\[(\d+)\] = STRING: ([^$]+)`)
+		t := re.FindStringSubmatch(string(l))
+		if t == nil {
+			continue
+		}
+		idx, _ := strconv.Atoi(t[1])
+		name := t[2]
+		indexes[name] = idx
+	}
+
+	return indexes, nil
 }
