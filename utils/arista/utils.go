@@ -64,6 +64,7 @@ func GetIfIndexeMap() (map[string]int, error) {
 	return indexes, nil
 }
 
+// little hack to read the OID from the snmpd.conf file.  Can't think of a better way to do this yet
 func GetBaseOid() (passpersist.Oid, error) {
 	progName := filepath.Base(os.Args[0])
 
