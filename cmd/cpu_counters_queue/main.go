@@ -790,12 +790,12 @@ func main() {
 			ingressVoqsSummaryTable := []int{11, 2, 1}
 			counters := cpuClass.Ports[""]
 
-			if coppClassId, ok := coppClassMap[coppClass]; ok {
-				pp.AddString(append(ingressVoqsSummaryTable, 1, coppClassId), coppClass)
-				pp.AddCounter64(append(ingressVoqsSummaryTable, 1, coppClassId), uint64(counters.EnqueuedPackets))
-				pp.AddCounter64(append(ingressVoqsSummaryTable, 2, coppClassId), uint64(counters.EnqueuedBytes))
-				pp.AddCounter64(append(ingressVoqsSummaryTable, 3, coppClassId), uint64(counters.DroppedPackets))
-				pp.AddCounter64(append(ingressVoqsSummaryTable, 4, coppClassId), uint64(counters.DroppedBytes))
+			if coppClassIdx, ok := coppClassMap[coppClass]; ok {
+				pp.AddString(append(ingressVoqsSummaryTable, 1, coppClassIdx), coppClass)
+				pp.AddCounter64(append(ingressVoqsSummaryTable, 2, coppClassIdx), uint64(counters.EnqueuedPackets))
+				pp.AddCounter64(append(ingressVoqsSummaryTable, 3, coppClassIdx), uint64(counters.EnqueuedBytes))
+				pp.AddCounter64(append(ingressVoqsSummaryTable, 4, coppClassIdx), uint64(counters.DroppedPackets))
+				pp.AddCounter64(append(ingressVoqsSummaryTable, 5, coppClassIdx), uint64(counters.DroppedBytes))
 			}
 		}
 	})
