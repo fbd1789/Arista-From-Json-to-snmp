@@ -666,7 +666,7 @@ var coppClassMap map[string]int = map[string]int{
 	"CoppSystemVxlanVtepLearn":   42,
 }
 
-var queueTypeMap map[string]int = map[string]int{
+var destTypeMap map[string]int = map[string]int{
 	"ucastQueues": 0,
 	"mcastQueues": 1,
 }
@@ -720,13 +720,6 @@ func main() {
 	passpersist.EnableSyslogLogger("warn", syslog.LOG_LOCAL4, "cpu_counters_queue_summary")
 	// passpersist.EnableConsoleLogger("debug")
 
-	// if err := json.Unmarshal(mockData, &data); err != nil {
-	// 	panic(err)
-	// }
-	if err := arista.EosCommandJson("show cpu counters queue summary", &data); err != nil {
-		log.Fatal().Err(err).Msg("failed to run eos command") //.Msgf("failed to read data: %s", err).Send()
-	}
-
 	//baseOid := passpersist.MustNewOid(passpersist.NetSnmpExtendMib).MustAppend([]int{5})
 	baseOid := arista.MustGetBaseOid()
 	cfg := passpersist.MustNewConfig(
@@ -737,8 +730,14 @@ func main() {
 	ctx := context.Background()
 
 	pp.Run(ctx, func(pp *passpersist.PassPersist) {
+		// if err := json.Unmarshal(mockData, &data); err != nil {
+		// 	panic(err)
+		// }
+		if err := arista.EosCommandJson("show cpu counters queue summary", &data); err != nil {
+			log.Fatal().Err(err).Msg("failed to run eos command") //.Msgf("failed to read data: %s", err).Send()
+		}
 
-		for port, queueTypes := range data.EgressQueues.Sources["all"].CpuPorts {
+		for port, destTypes := range data.EgressQueues.Sources["all"].CpuPorts {
 			egressQueuesSummaryTable := []int{11, 1, 1}
 			re := regexp.MustCompile(`CpuTm(\d+)`)
 
@@ -748,38 +747,38 @@ func main() {
 				continue
 			}
 
-			for queueType, queues := range queueTypes {
-				if queueTypeId, ok := queueTypeMap[queueType]; ok {
+			for destType, queues := range destTypes {
+				if destTypeId, ok := destTypeMap[destType]; ok {
 					for q, counters := range queues.Queues {
 						queueId, _ := strconv.Atoi(q)
-						//idx := []int{portId, queueTypeId, queueId}
+						//idx := []int{portId, destTypeId, queueId}
 
 						pp.AddString(
-							append(egressQueuesSummaryTable, 1, portId, queueTypeId, queueId),
+							append(egressQueuesSummaryTable, 1, portId, destTypeId, queueId),
 							port,
 						)
 						pp.AddString(
-							append(egressQueuesSummaryTable, 2, portId, queueTypeId, queueId),
-							queueType,
+							append(egressQueuesSummaryTable, 2, portId, destTypeId, queueId),
+							destType,
 						)
 						pp.AddInt(
-							append(egressQueuesSummaryTable, 3, portId, queueTypeId, queueId),
+							append(egressQueuesSummaryTable, 3, portId, destTypeId, queueId),
 							int32(queueId),
 						)
 						pp.AddCounter64(
-							append(egressQueuesSummaryTable, 4, portId, queueTypeId, queueId),
+							append(egressQueuesSummaryTable, 4, portId, destTypeId, queueId),
 							uint64(counters.EnqueuedPackets),
 						)
 						pp.AddCounter64(
-							append(egressQueuesSummaryTable, 5, portId, queueTypeId, queueId),
+							append(egressQueuesSummaryTable, 5, portId, destTypeId, queueId),
 							uint64(counters.EnqueuedBytes),
 						)
 						pp.AddCounter64(
-							append(egressQueuesSummaryTable, 6, portId, queueTypeId, queueId),
+							append(egressQueuesSummaryTable, 6, portId, destTypeId, queueId),
 							uint64(counters.DroppedPackets),
 						)
 						pp.AddCounter64(
-							append(egressQueuesSummaryTable, 7, portId, queueTypeId, queueId),
+							append(egressQueuesSummaryTable, 7, portId, destTypeId, queueId),
 							uint64(counters.DroppedBytes),
 						)
 					}
