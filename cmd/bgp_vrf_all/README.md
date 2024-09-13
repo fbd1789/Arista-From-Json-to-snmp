@@ -24,7 +24,7 @@ BaseOID: 1.3.6.1.4.1.30065.4.226
 # Build
 
 ```
-GOOS=linux go build -o bgp-vrf-all-linux-amd64 .
+GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -o ../../dist/bgp-vrf-all-linux-amd64 .
 ```
 
 # Installation
