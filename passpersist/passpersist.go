@@ -111,8 +111,8 @@ func (p *PassPersist) AddIP(subIds []int, value netip.Addr) error {
 	return p.AddEntry(subIds, typedValue{&IPAddrVal{value}})
 }
 
-func (p *PassPersist) AddIPv6(subIds []int, value netip.Addr) error {
-	return p.AddEntry(subIds, typedValue{&IPAddrVal{value}})
+func (p *PassPersist) AddIPV6(subIds []int, value netip.Addr) error {
+	return p.AddEntry(subIds, typedValue{&IPV6AddrVal{value}})
 }
 
 func (p *PassPersist) AddCounter32(subIds []int, value uint32) error {
@@ -212,6 +212,7 @@ func (p *PassPersist) Run(ctx context.Context, f func(*PassPersist)) {
 			case "get":
 				inp := <-input
 				if oid, ok := p.convertAndValidateOid(inp); ok {
+					log.Debug().Msgf("get: %+v", oid)
 					v := p.get(oid)
 					if v != nil {
 						fmt.Println(v.Marshal())
