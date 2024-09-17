@@ -3,14 +3,14 @@
 # Structure
 
 ```
-BaseOID: 1.3.6.1.4.1.30065.4.226
+BaseOID: <derived>
 
 +-- bgpVrfAll(1)
 |   |
-|   +-- bgpVrfAllTable(1)
+|   +-- ipbgpVrfAllTable(1)
 |   |   |
 |   |   +-- bgpVrfAllEntry(1)
-|	|	|   | Index: [address][maskLen][nextHop][vrfName]
+|	|	|   | Index: [prefix][prefixLen][nextHop][vrfName]
 |   |	|   |
 |   |   |   +-- String vrfName(1)
 |   |   |   |
@@ -19,6 +19,20 @@ BaseOID: 1.3.6.1.4.1.30065.4.226
 |   |   |   +-- Integer prefixLen int(3)
 |   |   |   |
 |   |   |   +-- IpAddress nextHop metric(4)
+|   |   |
+|   +-- ipv6bgpVrfAllTable(2)
+|   |   |
+|   |   +-- bgpVrfAllEntry(1)
+|	|	|   | Index: [prefix][prefixLen][nextHop][vrfName]
+|   |	|   |
+|   |   |   +-- String vrfName(1)
+|   |   |   |
+|   |   |   +-- IpAddress prefix(2)
+|   |   |   |
+|   |   |   +-- Integer prefixLen int(3)
+|   |   |   |
+|   |   |   +-- IpAddress nextHop metric(4)
+
 ```
 
 # Build
