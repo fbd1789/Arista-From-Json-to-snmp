@@ -60,5 +60,6 @@ _Wait few minutes for the data to populate if there are large number of prefixes
 
 ```
 switch#show snmp mib walk 1.3.6.1.4.1.30065.4.226
+...
 ```
 

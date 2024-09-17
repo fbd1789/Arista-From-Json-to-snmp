@@ -1,48 +1,17 @@
 package main
 
-/*
-BaseOID: <derived>
-
-+-- bgpVrfAll(1)
-|   |
-|   +-- ipbgpVrfAllTable(1)
-|   |   |
-|   |   +-- bgpVrfAllEntry(1)
-|	|	|   | Index: [prefix][prefixLen][nextHop][vrfName]
-|   |	|   |
-|   |   |   +-- String vrfName(1)
-|   |   |   |
-|   |   |   +-- IpAddress prefix(2)
-|   |   |   |
-|   |   |   +-- Integer prefixLen int(3)
-|   |   |   |
-|   |   |   +-- IpAddress nextHop metric(4)
-|   |   |
-|   +-- ipv6bgpVrfAllTable(2)
-|   |   |
-|   |   +-- bgpVrfAllEntry(1)
-|	|	|   | Index: [prefix][prefixLen][nextHop][vrfName]
-|   |	|   |
-|   |   |   +-- String vrfName(1)
-|   |   |   |
-|   |   |   +-- IpAddress prefix(2)
-|   |   |   |
-|   |   |   +-- Integer prefixLen int(3)
-|   |   |   |
-|   |   |   +-- IpAddress nextHop metric(4)
-
-*/
-
 import (
 	"context"
 	"encoding/asn1"
+	"log/slog"
 	"log/syslog"
 	"net/netip"
+	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/arista-northwest/go-passpersist/passpersist"
 	"github.com/arista-northwest/go-passpersist/utils/arista"
-	"github.com/rs/zerolog/log"
 )
 
 type IPAddress struct {
@@ -110,24 +79,16 @@ func encodeString(s string) []int {
 	return oid
 }
 
-// func intsToString(a []int, sep string) string {
-// 	sliced := make([]string, len(a))
-// 	for i, val := range a {
-// 		sliced[i] = strconv.Itoa(val)
-// 	}
-// 	return strings.Join(sliced, sep)
-// }
+func init() {
+	w, _ := syslog.New(syslog.LOG_LOCAL4, filepath.Base(os.Args[0]))
+	l := slog.New(slog.NewTextHandler(w, &slog.HandlerOptions{Level: slog.LevelDebug}))
+	slog.SetDefault(l)
+}
 
 func main() {
 
-	passpersist.EnableSyslogLogger("debug", syslog.LOG_LOCAL4, "ip_bgp_vrfs_all")
-
-	// uncomment for debugging
-	//passpersist.EnableConsoleLogger("debug")
-
-	//basOid := passpersist.MustNewOid(passpersist.AristaExperimentalMib).MustAppend([]int{226})
 	baseOid := arista.MustGetBaseOid()
-
+	// baseOid := passpersist.MustNewOid("1.3.6.1.4.1.30065.4.226")
 	cfg := passpersist.MustNewConfig(
 		passpersist.WithBaseOid(baseOid),
 		passpersist.WithRefreshInterval(60*time.Second),
@@ -138,7 +99,7 @@ func main() {
 		var v4Data ShowBgpVrfAll
 		// utils.MustLoadMockDataFile(&v4Data, "v4_data.json")
 		if err := arista.EosCommandJson("show ip bgp vrf all", &v4Data); err != nil {
-			log.Error().Msgf("failed to read data: %s", err)
+			slog.Error("failed to read data", slog.Any("error", err))
 			return
 		}
 		for name, vrf := range v4Data.Vrfs {
@@ -165,8 +126,7 @@ func main() {
 		var v6Data ShowBgpVrfAll
 		// utils.MustLoadMockDataFile(&v6Data, "v6_data.json")
 		if err := arista.EosCommandJson("show ipv6 bgp vrf all", &v6Data); err != nil {
-			log.Error().Msgf("failed to read data: %s", err)
-			return
+			slog.Error("failed to read data", slog.Any("error", err))
 		}
 		for name, vrf := range v6Data.Vrfs {
 			for p, entry := range vrf.BgpRouteEntries {

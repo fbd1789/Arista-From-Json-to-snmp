@@ -3,9 +3,12 @@ package main
 import (
 	"context"
 	"log"
+	"log/slog"
 	"log/syslog"
 	"net"
 	"net/netip"
+	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -119,6 +122,12 @@ type ShowVersion struct {
 	Architecture         string       `json:"architecture,omitempty"`
 }
 
+func init() {
+	w, _ := syslog.New(syslog.LOG_LOCAL4, filepath.Base(os.Args[0]))
+	l := slog.New(slog.NewTextHandler(w, &slog.HandlerOptions{Level: slog.LevelDebug}))
+	slog.SetDefault(l)
+}
+
 func main() {
 	var data ShowVersion
 	err := arista.EosCommandJson("show version | json", data)
@@ -126,11 +135,10 @@ func main() {
 		log.Fatal(err)
 	}
 
-	passpersist.EnableSyslogLogger("info", syslog.LOG_LOCAL4, "eos_version")
 	// uncomment for debugging
 	//passpersist.EnableConsoleLogger("debug")
 
-	oid := passpersist.MustNewOid(passpersist.AristaExperimentalMib).MustAppend([]int{225})
+	oid := arista.MustGetBaseOid()
 	cfg := passpersist.MustNewConfig(
 		passpersist.WithBaseOid(oid),
 		passpersist.WithRefreshInterval(10*time.Second),
@@ -145,7 +153,7 @@ func main() {
 		pp.AddOID([]int{255, 5}, passpersist.MustNewOid("1, 3, 6, 1, 4, 1, 30065, 4, 224"))
 		pp.AddOctetString([]int{255, 6}, []byte{'0', 'b', 'c', 'd'})
 		pp.AddIP([]int{255, 7}, netip.MustParseAddr("1.2.3.4"))
-		pp.AddIPv6([]int{255, 8}, netip.MustParseAddr("dead:beef:1:2:3::4"))
+		pp.AddIPV6([]int{255, 8}, netip.MustParseAddr("dead:beef:1:2:3::4"))
 		pp.AddGauge([]int{255, 9}, uint32(4294967295))
 		pp.AddTimeTicks([]int{255, 10}, data.Uptime.Duration)
 	})

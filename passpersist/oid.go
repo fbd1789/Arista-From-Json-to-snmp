@@ -6,12 +6,12 @@ import (
 	"bytes"
 	"encoding/asn1"
 	"fmt"
+	"log/slog"
 	"math"
+	"os"
 	"sort"
 	"strconv"
 	"strings"
-
-	"github.com/rs/zerolog/log"
 )
 
 type InvalidOidErr struct {
@@ -108,7 +108,8 @@ func (v Oid) Append(subs []int) (Oid, error) {
 func (v Oid) MustAppend(subs []int) Oid {
 	o, err := v.Append(subs)
 	if err != nil {
-		log.Panic().Err(err).Send()
+		slog.Error("failed to append subs", slog.Any("error", err))
+		os.Exit(1)
 	}
 	return o
 }
@@ -154,7 +155,8 @@ func NewOid(s string) (oid Oid, err error) {
 func MustNewOid(s string) Oid {
 	oid, err := NewOid(s)
 	if err != nil {
-		log.Panic().Err(err).Send()
+		slog.Error("failed to create new OID", slog.Any("error", err))
+		os.Exit(1)
 	}
 
 	return oid

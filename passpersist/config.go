@@ -4,11 +4,6 @@ import (
 	"time"
 )
 
-const (
-	AristaExperimentalMib = "1.3.6.1.4.1.30065.4"
-	NetSnmpExtendMib      = "1.3.6.1.4.1.8072.1.3.1"
-)
-
 type Config struct {
 	BaseOid         Oid
 	RefreshInterval time.Duration
@@ -20,8 +15,8 @@ func MustNewConfig(opts ...func(*Config)) *Config {
 		RefreshInterval: time.Second * 60,
 	}
 
-	for _, opt := range opts {
-		opt(cfg)
+	for _, f := range opts {
+		f(cfg)
 	}
 
 	return cfg

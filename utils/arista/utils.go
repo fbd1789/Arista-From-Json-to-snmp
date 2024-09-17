@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log/slog"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -14,7 +15,6 @@ import (
 
 	"github.com/arista-northwest/go-passpersist/passpersist"
 	"github.com/go-cmd/cmd"
-	"github.com/rs/zerolog/log"
 )
 
 func EosCommand(command string) ([]string, error) {
@@ -43,6 +43,15 @@ func EosCommandJson(command string, v any) error {
 	return json.Unmarshal(buf.Bytes(), v)
 }
 
+func MustGetIfIndexeMap() map[string]int {
+	m, err := GetIfIndexeMap()
+	if err != nil {
+		slog.Error("failed to get ifIndex map", slog.Any("error", err))
+		os.Exit(1)
+	}
+	return m
+}
+
 func GetIfIndexeMap() (map[string]int, error) {
 	indexes := make(map[string]int)
 	out, err := EosCommand("show snmp mib walk IF-MIB::ifDescr")
@@ -58,9 +67,13 @@ func GetIfIndexeMap() (map[string]int, error) {
 		}
 		idx, _ := strconv.Atoi(t[1])
 		name := t[2]
+		slog.Debug("adding interface index", "name", name, "idx", idx)
 		indexes[name] = idx
 	}
 
+	if len(indexes) == 0 {
+		return indexes, errors.New("failed to load index map")
+	}
 	return indexes, nil
 }
 
@@ -90,7 +103,7 @@ func GetBaseOid() (passpersist.Oid, error) {
 func MustGetBaseOid() passpersist.Oid {
 	o, err := GetBaseOid()
 	if err != nil {
-		log.Fatal().Err(err).Msg("failed to get base OID")
+		slog.Error("failed to get base OID", slog.Any("error", err))
 	}
 
 	return o

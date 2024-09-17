@@ -2,11 +2,11 @@ package passpersist
 
 import (
 	"fmt"
+	"log/slog"
 	"net/netip"
+	"reflect"
 	"strconv"
 	"time"
-
-	"github.com/rs/zerolog/log"
 )
 
 type VarBind struct {
@@ -53,7 +53,7 @@ func (v *typedValue) String() string {
 	case *TimeTicksVal:
 		return v.GetTimeTicksVal().String()
 	default:
-		log.Warn().Msgf("unknown value type %T", v.GetValue())
+		slog.Error("unknown value type ", "type", reflect.TypeOf(v.GetValue()).String())
 	}
 	return ""
 }
@@ -81,7 +81,7 @@ func (v *typedValue) TypeString() string {
 	case *TimeTicksVal:
 		return "TIMETICKS"
 	default:
-		log.Warn().Msgf("unknown value type %T", v.GetValue())
+		slog.Error("unknown value type", "type", reflect.TypeOf(v.GetValue()).String())
 	}
 	return ""
 }

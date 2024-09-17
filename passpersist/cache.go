@@ -4,9 +4,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log/slog"
 	"sync"
-
-	"github.com/rs/zerolog/log"
 )
 
 func NewCache() *Cache {
@@ -83,9 +82,9 @@ func (c *Cache) Get(oid Oid) *VarBind {
 	c.RLock()
 	defer c.RUnlock()
 
-	log.Debug().Msgf("getting value at: %s", oid.String())
+	slog.Debug("getting value at oid", "oid", oid.String())
 	if v, ok := c.committed[oid.String()]; ok {
-		log.Debug().Msgf("got value at: %s=%s", oid.String(), &v.Value)
+		slog.Debug("got value", "oid", oid.String(), "value", v.Value.String())
 		return v
 	}
 	return nil
@@ -95,18 +94,16 @@ func (c *Cache) GetNext(oid Oid) *VarBind {
 	c.RLock()
 	defer c.RUnlock()
 
-	log.Debug().Msgf("getting next value after: %s", oid.String())
+	slog.Debug("getting next value after", "oid", oid.String())
 
 	idx, err := c.getIndex(oid)
-	log.Debug().Msgf("got %s index at %d", oid.String(), idx)
+	slog.Debug("got index at", "oid", oid.String(), "index", idx)
 	if err != nil {
-		log.Info().Msgf("%s: %s", err.Error(), oid.String())
+		slog.Warn("failed to get index", slog.Any("error", err.Error()), "oid", oid.String())
 		return nil
 	}
 
 	idx++
-
-	log.Debug().Msgf("getting index of %d", idx)
 
 	if idx < len(c.index) {
 		next := c.index[idx]
@@ -124,7 +121,7 @@ func (c *Cache) Set(v *VarBind) error {
 	c.Lock()
 	defer c.Unlock()
 
-	log.Debug().Msgf("staging: %s %s %v", v.Oid, v.ValueType, v.Value)
+	slog.Debug("staging", "oid", v.Oid, "type", v.ValueType, "value", v.Value)
 
 	c.staged[v.Oid.String()] = v
 

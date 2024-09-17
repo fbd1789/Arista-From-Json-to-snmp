@@ -3,6 +3,8 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"log/slog"
+	"os"
 	"regexp"
 	"strconv"
 	"strings"
@@ -10,8 +12,6 @@ import (
 	//"os/exec"
 
 	"github.com/arista-northwest/go-passpersist/passpersist"
-	"github.com/go-cmd/cmd"
-	"github.com/rs/zerolog/log"
 )
 
 /*
@@ -166,19 +166,6 @@ type Routes struct {
 |   |   +-- Integer metric(3)
 */
 
-func eosCommand(command string) ([]string, error) {
-	c := cmd.NewCmd("Cli", "-p15", "-c", command)
-	c.Env = append(c.Env, "TERM=dumb")
-
-	<-c.Start()
-
-	stderr := c.Status().Stderr
-	if len(stderr) > 0 {
-		return []string{}, fmt.Errorf("%s", strings.Join(stderr, "\n"))
-	}
-	return c.Status().Stdout, nil
-}
-
 func parseTunnelIndexNames(out []string) (map[string]passpersist.Oid, error) {
 	// convert this:
 	// "MPLS-TE-STD-MIB::mplsTunnelName[0][2][16843009][16843010] = STRING: TUN-CEOS1-CEOS2"
@@ -222,7 +209,8 @@ func main() {
 
 	tunnels, err := parseTunnelIndexNames(mockTunnelIndexNames)
 	if err != nil {
-		log.Fatal().Msg(err.Error())
+		slog.Error("failed to parse", slog.Any("error", err))
+		os.Exit(1)
 	}
 
 	// //fmt.Printf("%+v\n", tunnels)

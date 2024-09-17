@@ -40,14 +40,16 @@ package main
 
 import (
 	"context"
+	"log/slog"
 	"log/syslog"
+	"os"
+	"path/filepath"
 	"regexp"
 	"strconv"
 	"time"
 
 	"github.com/arista-northwest/go-passpersist/passpersist"
 	"github.com/arista-northwest/go-passpersist/utils/arista"
-	"github.com/rs/zerolog/log"
 )
 
 // var mockData []byte = []byte(`{
@@ -714,11 +716,14 @@ type CpuPortQueueCounters struct {
 	DroppedBytes    int
 }
 
+func init() {
+	w, _ := syslog.New(syslog.LOG_LOCAL4, filepath.Base(os.Args[0]))
+	l := slog.New(slog.NewTextHandler(w, &slog.HandlerOptions{Level: slog.LevelDebug}))
+	slog.SetDefault(l)
+}
+
 func main() {
 	var data CpuCountersQueueSummary
-
-	passpersist.EnableSyslogLogger("warn", syslog.LOG_LOCAL4, "cpu_counters_queue_summary")
-	// passpersist.EnableConsoleLogger("debug")
 
 	//baseOid := passpersist.MustNewOid(passpersist.NetSnmpExtendMib).MustAppend([]int{5})
 	baseOid := arista.MustGetBaseOid()
@@ -734,7 +739,8 @@ func main() {
 		// 	panic(err)
 		// }
 		if err := arista.EosCommandJson("show cpu counters queue summary", &data); err != nil {
-			log.Fatal().Err(err).Msg("failed to run eos command") //.Msgf("failed to read data: %s", err).Send()
+			slog.Warn("failed to run eos command", slog.Any("error", err)) //.Msgf("failed to read data: %s", err).Send()
+			return
 		}
 
 		for port, destTypes := range data.EgressQueues.Sources["all"].CpuPorts {
@@ -743,7 +749,7 @@ func main() {
 
 			portId, err := strconv.Atoi(re.FindStringSubmatch(port)[1])
 			if err != nil {
-				log.Warn().Err(err).Msg("failed to patse cpu port")
+				slog.Warn("failed to patse cpu port", slog.Any("error", err))
 				continue
 			}
 

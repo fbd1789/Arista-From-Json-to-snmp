@@ -12,7 +12,8 @@ import (
 
 	"os"
 
-	"github.com/rs/zerolog/log"
+	"log/slog"
+
 	"golang.org/x/sys/unix"
 )
 
@@ -25,11 +26,6 @@ const (
 	// WrongLength
 	// InconsistentValue
 )
-
-func init() {
-	// default to no logging
-	DisableLogging()
-}
 
 func (e SetError) String() string {
 	switch e {
@@ -44,9 +40,9 @@ func (e SetError) String() string {
 	// case InconsistentValue:
 	// 	return "inconsistent-value"
 	default:
-		log.Fatal().Msgf("unknown value type id: %d", e)
+		slog.Error("unknown value type id", slog.Any("error", e))
 	}
-	return ""
+	return "unknown-error"
 }
 
 type PassPersist struct {
@@ -62,7 +58,7 @@ func NewPassPersist(config *Config) *PassPersist {
 }
 
 func (p *PassPersist) get(oid Oid) *VarBind {
-	log.Debug().Msgf("getting oid: %s", oid.String())
+	slog.Debug("getting oid", "oid", oid.String())
 	return p.cache.Get(oid)
 }
 
@@ -76,7 +72,7 @@ func (p *PassPersist) AddEntry(subs []int, value typedValue) error {
 		return err
 	}
 
-	log.Debug().Msgf("adding %s: %s, %s", value.TypeString(), oid, value)
+	slog.Debug("adding entry", "type", value.TypeString(), "oid", oid.String(), "value", value.String())
 
 	err = p.cache.Set(&VarBind{
 		Oid:       oid,
@@ -162,7 +158,7 @@ func (p *PassPersist) update(ctx context.Context, callback func(*PassPersist)) {
 
 	err := setPrio(15)
 	if err != nil {
-		log.Warn().Msgf("failed to set priority")
+		slog.Warn("failed to set priority")
 	}
 
 	for {
@@ -195,9 +191,9 @@ func (p *PassPersist) Run(ctx context.Context, f func(*PassPersist)) {
 				fmt.Println("PONG")
 			case "getnext":
 				inp := <-input
-				log.Debug().Msgf("validating: %s", inp)
+				slog.Debug("validating", "input", inp)
 				if oid, ok := p.convertAndValidateOid(inp); ok {
-					log.Debug().Msgf("getNext: %+v", oid)
+					slog.Debug("getNext", "oid", oid.String())
 					v := p.getNext(oid)
 					if v != nil {
 						fmt.Println(v.Marshal())
@@ -205,14 +201,14 @@ func (p *PassPersist) Run(ctx context.Context, f func(*PassPersist)) {
 						fmt.Println("NONE")
 					}
 				} else {
-					log.Debug().Msgf("failed to validate input: %s", inp)
+					slog.Warn("failed to validate input", "input", inp)
 					fmt.Println("NONE")
 				}
 
 			case "get":
 				inp := <-input
 				if oid, ok := p.convertAndValidateOid(inp); ok {
-					log.Debug().Msgf("get: %+v", oid)
+					slog.Debug("get", "oid", oid.String())
 					v := p.get(oid)
 					if v != nil {
 						fmt.Println(v.Marshal())
@@ -256,14 +252,14 @@ func watchStdin(ctx context.Context, input chan<- string, done chan<- bool) {
 			return
 		default:
 			line := scanner.Text()
-			log.Debug().Msgf("Got user input: %s", line)
+			slog.Debug("got user input", "input", line)
 			input <- line
 		}
 	}
 
 	if err := scanner.Err(); err != nil {
 		if err != io.EOF {
-			log.Error().Msg(err.Error())
+			slog.Error("scanner encountered an error", slog.Any("error", err.Error()))
 		}
 	}
 }
@@ -272,7 +268,7 @@ func (p *PassPersist) convertAndValidateOid(oid string) (Oid, bool) {
 	o, err := NewOid(oid)
 
 	if err != nil {
-		log.Warn().Msgf("failed to load oid: %s", oid)
+		slog.Warn("failed to load oid", "oid", oid)
 		return Oid{}, false
 	}
 
