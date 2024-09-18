@@ -27,6 +27,11 @@ type Oid struct {
 	Value asn1.ObjectIdentifier
 }
 
+func (o *Oid) EnvDecode(value string) error {
+	*o = MustNewOid(value)
+	return nil
+}
+
 func (v Oid) String() string {
 	return v.Value.String()
 }
