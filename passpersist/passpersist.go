@@ -46,14 +46,22 @@ func (e SetError) String() string {
 }
 
 type PassPersist struct {
+	ctx    context.Context
 	cache  *Cache
-	config *Config
+	config Config
 }
 
-func NewPassPersist(config *Config) *PassPersist {
+func NewPassPersist(ctx context.Context, opts ...ConfigFunc) *PassPersist {
+	c := NewConfigWithDefaults(ctx)
+
+	for _, fn := range opts {
+		fn(&c)
+	}
+
 	return &PassPersist{
+		ctx:    ctx,
 		cache:  NewCache(),
-		config: config,
+		config: c,
 	}
 }
 
@@ -176,12 +184,12 @@ func (p *PassPersist) update(ctx context.Context, callback func(*PassPersist)) {
 	}
 }
 
-func (p *PassPersist) Run(ctx context.Context, f func(*PassPersist)) {
+func (p *PassPersist) Run(f func(*PassPersist)) {
 	input := make(chan string)
 	done := make(chan bool)
 
-	go p.update(ctx, f)
-	go watchStdin(ctx, input, done)
+	go p.update(p.ctx, f)
+	go watchStdin(p.ctx, input, done)
 
 	for {
 		select {
@@ -231,7 +239,7 @@ func (p *PassPersist) Run(ctx context.Context, f func(*PassPersist)) {
 			}
 		case <-done:
 			return
-		case <-ctx.Done():
+		case <-p.ctx.Done():
 			return
 		}
 	}
