@@ -86,16 +86,19 @@ func init() {
 }
 
 func main() {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 
-	baseOid := arista.MustGetBaseOid()
-	// baseOid := passpersist.MustNewOid("1.3.6.1.4.1.30065.4.226")
-	cfg := passpersist.MustNewConfig(
-		passpersist.WithBaseOid(baseOid),
-		passpersist.WithRefreshInterval(60*time.Second),
-	)
-	pp := passpersist.NewPassPersist(cfg)
-	ctx := context.Background()
-	pp.Run(ctx, func(pp *passpersist.PassPersist) {
+	var opts []passpersist.ConfigFunc
+	b, _ := arista.GetBaseOidFromSnmpConfig()
+	if b != nil {
+		opts = append(opts, passpersist.WithBaseOid(*b))
+	}
+
+	opts = append(opts, passpersist.WithRefreshInterval(time.Second*30))
+	pp := passpersist.NewPassPersist(ctx, opts...)
+
+	pp.Run(func(pp *passpersist.PassPersist) {
 		var v4Data ShowBgpVrfAll
 		// utils.MustLoadMockDataFile(&v4Data, "v4_data.json")
 		if err := arista.EosCommandJson("show ip bgp vrf all", &v4Data); err != nil {

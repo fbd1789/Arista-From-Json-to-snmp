@@ -2,13 +2,10 @@ package main
 
 import (
 	"context"
-	"log"
 	"log/slog"
-	"log/syslog"
 	"net"
 	"net/netip"
 	"os"
-	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -123,34 +120,36 @@ type ShowVersion struct {
 }
 
 func init() {
-	w, _ := syslog.New(syslog.LOG_LOCAL4, filepath.Base(os.Args[0]))
+	//w, _ := syslog.New(syslog.LOG_LOCAL4, filepath.Base(os.Args[0]))
+	w := os.Stdout
 	l := slog.New(slog.NewTextHandler(w, &slog.HandlerOptions{Level: slog.LevelDebug}))
 	slog.SetDefault(l)
 }
 
 func main() {
-	var data ShowVersion
-	err := arista.EosCommandJson("show version | json", data)
-	if err != nil {
-		log.Fatal(err)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	var opts []passpersist.ConfigFunc
+	baseOid, _ := arista.GetBaseOidFromSnmpConfig()
+	if baseOid != nil {
+		opts = append(opts, passpersist.WithBaseOid(*baseOid))
 	}
 
-	// uncomment for debugging
-	//passpersist.EnableConsoleLogger("debug")
+	pp := passpersist.NewPassPersist(ctx, opts...)
 
-	oid := arista.MustGetBaseOid()
-	cfg := passpersist.MustNewConfig(
-		passpersist.WithBaseOid(oid),
-		passpersist.WithRefreshInterval(10*time.Second),
-	)
-	pp := passpersist.NewPassPersist(cfg)
-	ctx := context.Background()
-	pp.Run(ctx, func(pp *passpersist.PassPersist) {
+	pp.Run(func(pp *passpersist.PassPersist) {
+		var data ShowVersion
+		err := arista.EosCommandJson("show version", data)
+		if err != nil {
+			slog.Error("failed to run command", slog.Any("error", err))
+			os.Exit(1)
+		}
 		pp.AddString([]int{255, 1}, data.Version)
 		pp.AddInt([]int{255, 2}, int32(data.MemoryFree))
 		pp.AddCounter32([]int{255, 3}, uint32(4294967295))
 		pp.AddCounter64([]int{255, 4}, uint64(18446744073709551615))
-		pp.AddOID([]int{255, 5}, passpersist.MustNewOid("1, 3, 6, 1, 4, 1, 30065, 4, 224"))
+		pp.AddOID([]int{255, 5}, passpersist.MustNewOid("1.3.6.1.4.1.30065.4.224"))
 		pp.AddOctetString([]int{255, 6}, []byte{'0', 'b', 'c', 'd'})
 		pp.AddIP([]int{255, 7}, netip.MustParseAddr("1.2.3.4"))
 		pp.AddIPV6([]int{255, 8}, netip.MustParseAddr("dead:beef:1:2:3::4"))

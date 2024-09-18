@@ -723,18 +723,22 @@ func init() {
 }
 
 func main() {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
 	var data CpuCountersQueueSummary
 
-	//baseOid := passpersist.MustNewOid(passpersist.NetSnmpExtendMib).MustAppend([]int{5})
-	baseOid := arista.MustGetBaseOid()
-	cfg := passpersist.MustNewConfig(
-		passpersist.WithBaseOid(baseOid),
-		passpersist.WithRefreshInterval(time.Second*30),
-	)
-	pp := passpersist.NewPassPersist(cfg)
-	ctx := context.Background()
+	var opts []passpersist.ConfigFunc
 
-	pp.Run(ctx, func(pp *passpersist.PassPersist) {
+	b, _ := arista.GetBaseOidFromSnmpConfig()
+	if b != nil {
+		opts = append(opts, passpersist.WithBaseOid(*b))
+	}
+	opts = append(opts, passpersist.WithRefreshInterval(time.Second*30))
+
+	pp := passpersist.NewPassPersist(ctx, opts...)
+
+	pp.Run(func(pp *passpersist.PassPersist) {
 		// if err := json.Unmarshal(mockData, &data); err != nil {
 		// 	panic(err)
 		// }

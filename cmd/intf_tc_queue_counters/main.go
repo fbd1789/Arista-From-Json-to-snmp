@@ -51,10 +51,17 @@ func main() {
 	l := slog.New(slog.NewTextHandler(w, &slog.HandlerOptions{Level: slog.LevelDebug}))
 	slog.SetDefault(l)
 
-	oid := arista.MustGetBaseOid()
-	cfg := passpersist.MustNewConfig(passpersist.WithBaseOid(oid), passpersist.WithRefreshInterval(60*time.Second))
-	pp := passpersist.NewPassPersist(cfg)
-	pp.Run(ctx, func(pp *passpersist.PassPersist) {
+	var opts []passpersist.ConfigFunc
+
+	b, _ := arista.GetBaseOidFromSnmpConfig()
+	if b != nil {
+		opts = append(opts, passpersist.WithBaseOid(*b))
+	}
+	opts = append(opts, passpersist.WithRefreshInterval(time.Second*60))
+
+	pp := passpersist.NewPassPersist(ctx, opts...)
+
+	pp.Run(func(pp *passpersist.PassPersist) {
 		var data InterfaceQueueCounters
 		idxs, err := arista.GetIfIndexeMap()
 		if err != nil {

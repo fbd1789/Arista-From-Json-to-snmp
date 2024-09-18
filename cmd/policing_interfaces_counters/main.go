@@ -3,9 +3,7 @@ package main
 import (
 	"context"
 	"log/slog"
-	"log/syslog"
 	"os"
-	"path/filepath"
 	"time"
 
 	"github.com/arista-northwest/go-passpersist/passpersist"
@@ -92,23 +90,26 @@ type Counters struct {
 }
 
 func main() {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
 	data := &PolicingInterfaceCounters{}
 
-	w, _ := syslog.New(syslog.LOG_LOCAL4, filepath.Base(os.Args[0]))
+	//w, _ := syslog.New(syslog.LOG_LOCAL4, utils.ProgName())
+	w := os.Stdout
 	l := slog.New(slog.NewTextHandler(w, &slog.HandlerOptions{Level: slog.LevelDebug}))
 	slog.SetDefault(l)
 
-	baseOid := arista.MustGetBaseOid()
-	// baseOid := passpersist.MustNewOid(passpersist.NetSnmpExtendMib).MustAppend([]int{224})
+	var opts []passpersist.ConfigFunc
 
-	cfg := passpersist.MustNewConfig(
-		passpersist.WithBaseOid(baseOid),
-		passpersist.WithRefreshInterval(60*time.Second),
-	)
-	pp := passpersist.NewPassPersist(cfg)
+	b, _ := arista.GetBaseOidFromSnmpConfig()
+	if b != nil {
+		opts = append(opts, passpersist.WithBaseOid(*b))
+	}
+	opts = append(opts, passpersist.WithRefreshInterval(time.Second*60))
+	pp := passpersist.NewPassPersist(ctx, opts...)
 
-	ctx := context.Background()
-	pp.Run(ctx, func(pp *passpersist.PassPersist) {
+	pp.Run(func(pp *passpersist.PassPersist) {
 		// if err := json.Unmarshal(mock, &data); err != nil {
 		// 	panic(err)
 		// }
