@@ -65,17 +65,17 @@ func NewPassPersist(ctx context.Context, opts ...ConfigFunc) *PassPersist {
 	}
 }
 
-func (p *PassPersist) get(oid Oid) *VarBind {
+func (p *PassPersist) get(oid OID) *VarBind {
 	slog.Debug("getting oid", "oid", oid.String())
 	return p.cache.Get(oid)
 }
 
-func (p *PassPersist) getNext(oid Oid) *VarBind {
+func (p *PassPersist) getNext(oid OID) *VarBind {
 	return p.cache.GetNext(oid)
 }
 
 func (p *PassPersist) AddEntry(subs []int, value typedValue) error {
-	oid, err := p.config.BaseOid.Append(subs)
+	oid, err := p.config.BaseOID.Append(subs)
 	if err != nil {
 		return err
 	}
@@ -83,7 +83,7 @@ func (p *PassPersist) AddEntry(subs []int, value typedValue) error {
 	slog.Debug("adding entry", "type", value.TypeString(), "oid", oid.String(), "value", value.String())
 
 	err = p.cache.Set(&VarBind{
-		Oid:       oid,
+		OID:       oid,
 		ValueType: value.TypeString(),
 		Value:     value,
 	})
@@ -103,7 +103,7 @@ func (p *PassPersist) AddInt(subIds []int, value int32) error {
 	return p.AddEntry(subIds, typedValue{&IntVal{value}})
 }
 
-func (p *PassPersist) AddOID(subIds []int, value Oid) error {
+func (p *PassPersist) AddOID(subIds []int, value OID) error {
 	return p.AddEntry(subIds, typedValue{&OIDVal{value}})
 }
 
@@ -138,7 +138,7 @@ func (p *PassPersist) AddTimeTicks(subIds []int, value time.Duration) error {
 func (p *PassPersist) Dump() {
 	out := make(map[string]interface{})
 
-	out["base-oid"] = p.config.BaseOid
+	out["base-oid"] = p.config.BaseOID
 	out["refresh"] = p.config.RefreshInterval
 
 	j, _ := json.MarshalIndent(out, "", "  ")
@@ -200,7 +200,7 @@ func (p *PassPersist) Run(f func(*PassPersist)) {
 			case "getnext":
 				inp := <-input
 				slog.Debug("validating", "input", inp)
-				if oid, ok := p.convertAndValidateOid(inp); ok {
+				if oid, ok := p.convertAndValidateOID(inp); ok {
 					slog.Debug("getNext", "oid", oid.String())
 					v := p.getNext(oid)
 					if v != nil {
@@ -215,7 +215,7 @@ func (p *PassPersist) Run(f func(*PassPersist)) {
 
 			case "get":
 				inp := <-input
-				if oid, ok := p.convertAndValidateOid(inp); ok {
+				if oid, ok := p.convertAndValidateOID(inp); ok {
 					slog.Debug("get", "oid", oid.String())
 					v := p.get(oid)
 					if v != nil {
@@ -272,15 +272,15 @@ func watchStdin(ctx context.Context, input chan<- string, done chan<- bool) {
 	}
 }
 
-func (p *PassPersist) convertAndValidateOid(oid string) (Oid, bool) {
-	o, err := NewOid(oid)
+func (p *PassPersist) convertAndValidateOID(oid string) (OID, bool) {
+	o, err := NewOID(oid)
 
 	if err != nil {
 		slog.Warn("failed to load oid", "oid", oid)
-		return Oid{}, false
+		return OID{}, false
 	}
 
-	if !o.Contains(p.config.BaseOid) {
+	if !o.Contains(p.config.BaseOID) {
 		return o, false
 	}
 

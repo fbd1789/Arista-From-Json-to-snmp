@@ -10,18 +10,18 @@ import (
 )
 
 type VarBind struct {
-	Oid       Oid        `json:"oid"`
+	OID       OID        `json:"oid"`
 	ValueType string     `json:"type"`
 	Value     typedValue `json:"value"`
 }
 
 func (r *VarBind) String() string {
-	return fmt.Sprintf("%s, %s, %v", r.Oid, r.Value.TypeString(), r.Value)
+	return fmt.Sprintf("%s, %s, %v", r.OID, r.Value.TypeString(), r.Value)
 }
 
 func (r *VarBind) Marshal() string {
 
-	return fmt.Sprintf("%s\n%s\n%s", r.Oid, r.Value.TypeString(), r.Value.String())
+	return fmt.Sprintf("%s\n%s\n%s", r.OID, r.Value.TypeString(), r.Value.String())
 }
 
 type typedValue struct {
@@ -141,11 +141,11 @@ func (v *typedValue) GetOctetStringVal() []byte {
 	return []byte{}
 }
 
-func (v *typedValue) GetOIDVal() Oid {
+func (v *typedValue) GetOIDVal() OID {
 	if x, ok := v.GetValue().(*OIDVal); ok {
 		return x.Value
 	}
-	return Oid{}
+	return OID{}
 }
 
 func (v *typedValue) GetStringVal() string {
@@ -195,7 +195,7 @@ type OctetStringVal struct {
 }
 
 type OIDVal struct {
-	Value Oid
+	Value OID
 }
 
 type StringVal struct {

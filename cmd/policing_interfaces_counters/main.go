@@ -102,9 +102,9 @@ func main() {
 
 	var opts []passpersist.ConfigFunc
 
-	b, _ := arista.GetBaseOidFromSnmpConfig()
+	b, _ := arista.GetBaseOIDFromSnmpConfig()
 	if b != nil {
-		opts = append(opts, passpersist.WithBaseOid(*b))
+		opts = append(opts, passpersist.WithBaseOID(*b))
 	}
 	opts = append(opts, passpersist.WithRefreshInterval(time.Second*60))
 	pp := passpersist.NewPassPersist(ctx, opts...)

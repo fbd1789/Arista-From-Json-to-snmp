@@ -11,7 +11,7 @@ import (
 type ConfigFunc func(*Config)
 
 type Config struct {
-	BaseOid         Oid           `env:"BASE_OID, overwrite"`
+	BaseOID         OID           `env:"BASE_OID, overwrite"`
 	RefreshInterval time.Duration `env:"REFRESH_INTERVAL, overwrite"`
 	ConsoleDebug    bool          `env:"CONSOLE_DEBUG, overwrite"`
 }
@@ -19,7 +19,7 @@ type Config struct {
 func NewConfigWithDefaults(ctx context.Context) Config {
 	//ctx := context.Background()
 	c := Config{
-		BaseOid:         MustNewOid(NetSnmpExtendMib),
+		BaseOID:         MustNewOID(NetSnmpExtendMib),
 		RefreshInterval: time.Second * 60,
 		ConsoleDebug:    false,
 	}
@@ -35,9 +35,9 @@ func WithConsoleDebug(cfg *Config) {
 	cfg.ConsoleDebug = true
 }
 
-func WithBaseOid(oid Oid) ConfigFunc {
+func WithBaseOID(oid OID) ConfigFunc {
 	return func(c *Config) {
-		c.BaseOid = oid
+		c.BaseOID = oid
 	}
 }
 

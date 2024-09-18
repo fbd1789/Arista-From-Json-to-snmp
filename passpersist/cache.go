@@ -19,10 +19,10 @@ type Cache struct {
 	sync.RWMutex
 	staged    map[string]*VarBind
 	committed map[string]*VarBind
-	index     Oids
+	index     OIDs
 }
 
-func (c *Cache) getIndex(o Oid) (int, error) {
+func (c *Cache) getIndex(o OID) (int, error) {
 	for p, v := range c.index {
 		if v.Equal(o) {
 			return p, nil
@@ -44,9 +44,9 @@ func (c *Cache) Commit() error {
 	c.committed = c.staged
 	c.staged = make(map[string]*VarBind)
 
-	idx := make(Oids, 0, len(c.committed))
+	idx := make(OIDs, 0, len(c.committed))
 	for _, vb := range c.committed {
-		idx = append(idx, vb.Oid)
+		idx = append(idx, vb.OID)
 	}
 
 	idx = idx.Sort()
@@ -78,7 +78,7 @@ func (c *Cache) Dump() {
 	fmt.Println(string(y))
 }
 
-func (c *Cache) Get(oid Oid) *VarBind {
+func (c *Cache) Get(oid OID) *VarBind {
 	c.RLock()
 	defer c.RUnlock()
 
@@ -90,7 +90,7 @@ func (c *Cache) Get(oid Oid) *VarBind {
 	return nil
 }
 
-func (c *Cache) GetNext(oid Oid) *VarBind {
+func (c *Cache) GetNext(oid OID) *VarBind {
 	c.RLock()
 	defer c.RUnlock()
 
@@ -121,9 +121,9 @@ func (c *Cache) Set(v *VarBind) error {
 	c.Lock()
 	defer c.Unlock()
 
-	slog.Debug("staging", "oid", v.Oid, "type", v.ValueType, "value", v.Value)
+	slog.Debug("staging", "oid", v.OID, "type", v.ValueType, "value", v.Value)
 
-	c.staged[v.Oid.String()] = v
+	c.staged[v.OID.String()] = v
 
 	return nil
 }

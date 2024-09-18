@@ -166,16 +166,16 @@ type Routes struct {
 |   |   +-- Integer metric(3)
 */
 
-func parseTunnelIndexNames(out []string) (map[string]passpersist.Oid, error) {
+func parseTunnelIndexNames(out []string) (map[string]passpersist.OID, error) {
 	// convert this:
 	// "MPLS-TE-STD-MIB::mplsTunnelName[0][2][16843009][16843010] = STRING: TUN-CEOS1-CEOS2"
 	// to:
 	// map[TUN-CEOS1-CEOS2:0.0.2.16843009.16843010]
 
-	tuns := make(map[string]passpersist.Oid)
+	tuns := make(map[string]passpersist.OID)
 
 	for _, line := range out {
-		idx := passpersist.MustNewOid(".")
+		idx := passpersist.MustNewOID(".")
 		line = strings.Trim(line, "\n")
 
 		re := regexp.MustCompile(`(?:\[(\d+)\])(?:\[(\d+)\])(?:\[(\d+)\])(?:\[(\d+)\])\s+=\s+STRING: ([^$]+)`)

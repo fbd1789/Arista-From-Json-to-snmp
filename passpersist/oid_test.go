@@ -5,8 +5,8 @@ import (
 	"testing"
 )
 
-func TestNewOidEmpty(t *testing.T) {
-	o := MustNewOid("1.3")
+func TestNewOIDEmpty(t *testing.T) {
+	o := MustNewOID("1.3")
 
 	_, err := o.Append([]int{1, 2, 3, 4})
 	if err != nil {
@@ -15,8 +15,8 @@ func TestNewOidEmpty(t *testing.T) {
 
 }
 
-func TestOidAppend(t *testing.T) {
-	o := MustNewOid("1.2")
+func TestOIDAppend(t *testing.T) {
+	o := MustNewOID("1.2")
 
 	o, _ = o.Append([]int{3, 4})
 	o, _ = o.Append([]int{5, 6})

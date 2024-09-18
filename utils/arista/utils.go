@@ -78,7 +78,7 @@ func GetIfIndexeMap() (map[string]int, error) {
 }
 
 // little hack to read the OID from the snmpd.conf file.  Can't think of a better way to do this yet
-func GetBaseOidFromSnmpConfig() (*passpersist.Oid, error) {
+func GetBaseOIDFromSnmpConfig() (*passpersist.OID, error) {
 	//progName := filepath.Base(os.Args[0])
 
 	file, err := os.Open("/etc/snmp/snmpd.conf")
@@ -93,7 +93,7 @@ func GetBaseOidFromSnmpConfig() (*passpersist.Oid, error) {
 	for scanner.Scan() {
 		m := re.FindStringSubmatch(scanner.Text())
 		if len(m) > 0 {
-			o := passpersist.MustNewOid(m[1])
+			o := passpersist.MustNewOID(m[1])
 			return &o, nil
 		}
 
@@ -101,8 +101,8 @@ func GetBaseOidFromSnmpConfig() (*passpersist.Oid, error) {
 	return nil, errors.New("extension not found in configutation")
 }
 
-func MustGetBaseOid() *passpersist.Oid {
-	o, err := GetBaseOidFromSnmpConfig()
+func MustGetBaseOID() *passpersist.OID {
+	o, err := GetBaseOIDFromSnmpConfig()
 	if err != nil {
 		slog.Error("failed to get base OID", slog.Any("error", err))
 		os.Exit(1)

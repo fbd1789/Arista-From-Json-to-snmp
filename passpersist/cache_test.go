@@ -6,7 +6,7 @@ func TestCacheSet(t *testing.T) {
 	c := NewCache()
 	varBinds := []*VarBind{
 		{
-			Oid:       MustNewOid("1.3.6.1.4.1.30065.4.224.255.0"),
+			OID:       MustNewOID("1.3.6.1.4.1.30065.4.224.255.0"),
 			ValueType: "STRING",
 			Value:     typedValue{Value: &StringVal{Value: "TEST"}},
 		},
@@ -20,7 +20,7 @@ func TestCacheSet(t *testing.T) {
 	c.Commit()
 
 	for _, vb := range varBinds {
-		if !c.Get(vb.Oid).Oid.Equal(vb.Oid) {
+		if !c.Get(vb.OID).OID.Equal(vb.OID) {
 			t.Errorf("var binds do not match")
 		}
 	}

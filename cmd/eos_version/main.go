@@ -131,9 +131,9 @@ func main() {
 	defer cancel()
 
 	var opts []passpersist.ConfigFunc
-	baseOid, _ := arista.GetBaseOidFromSnmpConfig()
-	if baseOid != nil {
-		opts = append(opts, passpersist.WithBaseOid(*baseOid))
+	baseOID, _ := arista.GetBaseOIDFromSnmpConfig()
+	if baseOID != nil {
+		opts = append(opts, passpersist.WithBaseOID(*baseOID))
 	}
 
 	pp := passpersist.NewPassPersist(ctx, opts...)
@@ -149,7 +149,7 @@ func main() {
 		pp.AddInt([]int{255, 2}, int32(data.MemoryFree))
 		pp.AddCounter32([]int{255, 3}, uint32(4294967295))
 		pp.AddCounter64([]int{255, 4}, uint64(18446744073709551615))
-		pp.AddOID([]int{255, 5}, passpersist.MustNewOid("1.3.6.1.4.1.30065.4.224"))
+		pp.AddOID([]int{255, 5}, passpersist.MustNewOID("1.3.6.1.4.1.30065.4.224"))
 		pp.AddOctetString([]int{255, 6}, []byte{'0', 'b', 'c', 'd'})
 		pp.AddIP([]int{255, 7}, netip.MustParseAddr("1.2.3.4"))
 		pp.AddIPV6([]int{255, 8}, netip.MustParseAddr("dead:beef:1:2:3::4"))

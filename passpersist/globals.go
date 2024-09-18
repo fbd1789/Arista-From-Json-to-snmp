@@ -7,6 +7,6 @@ const (
 )
 
 // var (
-// 	BaseOid         Oid           = MustNewOid(NetSnmpExtendMib)
+// 	BaseOID         OID           = MustNewOID(NetSnmpExtendMib)
 // 	RefreshInterval time.Duration = 5 * time.Second
 // )

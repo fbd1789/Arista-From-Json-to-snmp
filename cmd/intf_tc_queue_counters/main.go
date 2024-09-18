@@ -46,16 +46,16 @@ func main() {
 	defer cancel()
 
 	// global settings
-	//passpersist.BaseOid, _ = passpersist.MustNewOid(passpersist.AristaExperimentalMib).Append([]int{224})
+	//passpersist.BaseOID, _ = passpersist.MustNewOID(passpersist.AristaExperimentalMib).Append([]int{224})
 	w, _ := syslog.New(syslog.LOG_LOCAL4, filepath.Base(os.Args[0]))
 	l := slog.New(slog.NewTextHandler(w, &slog.HandlerOptions{Level: slog.LevelDebug}))
 	slog.SetDefault(l)
 
 	var opts []passpersist.ConfigFunc
 
-	b, _ := arista.GetBaseOidFromSnmpConfig()
+	b, _ := arista.GetBaseOIDFromSnmpConfig()
 	if b != nil {
-		opts = append(opts, passpersist.WithBaseOid(*b))
+		opts = append(opts, passpersist.WithBaseOID(*b))
 	}
 	opts = append(opts, passpersist.WithRefreshInterval(time.Second*60))
 
