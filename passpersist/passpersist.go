@@ -135,16 +135,12 @@ func (p *PassPersist) AddTimeTicks(subIds []int, value time.Duration) error {
 	return p.AddEntry(subIds, typedValue{&TimeTicksVal{value}})
 }
 
-func (p *PassPersist) Dump() {
-	out := make(map[string]interface{})
-
-	out["base-oid"] = p.config.BaseOID
-	out["refresh"] = p.config.RefreshInterval
-
-	j, _ := json.MarshalIndent(out, "", "  ")
-	fmt.Println(string(j))
-
-	p.cache.Dump()
+func (p *PassPersist) dumpConfig() {
+	b, err := json.MarshalIndent(p.config, "", "   ")
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+	fmt.Println(string(b))
 }
 
 func setPrio(prio int) error {
@@ -228,12 +224,12 @@ func (p *PassPersist) Run(f func(*PassPersist)) {
 				}
 			case "set":
 				fmt.Println(NotWriteable)
-			case "DUMP", "D":
-				p.Dump()
-			case "DUMPCACHE", "DC":
+			case "DUMP", "D", "C":
 				p.cache.Dump()
-			case "DUMPINDEX", "DI":
+			case "DUMPINDEX", "DI", "I":
 				p.cache.DumpIndex()
+			case "DUMPCONFIG", "DO", "O":
+				p.dumpConfig()
 			default:
 				fmt.Println("NONE")
 			}

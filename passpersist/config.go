@@ -11,9 +11,9 @@ import (
 type ConfigFunc func(*Config)
 
 type Config struct {
-	BaseOID         OID           `env:"BASE_OID, overwrite"`
-	RefreshInterval time.Duration `env:"REFRESH_INTERVAL, overwrite"`
-	ConsoleDebug    bool          `env:"CONSOLE_DEBUG, overwrite"`
+	BaseOID         OID           `json:"base-oid" env:"BASE_OID, overwrite"`
+	RefreshInterval time.Duration `json:"refresh-interval" env:"REFRESH_INTERVAL, overwrite"`
+	ConsoleDebug    bool          `json:"console-debug" env:"CONSOLE_DEBUG, overwrite"`
 }
 
 func NewConfigWithDefaults(ctx context.Context) Config {

@@ -1,6 +1,7 @@
 package passpersist
 
 import (
+	"encoding/json"
 	"fmt"
 	"log/slog"
 	"net/netip"
@@ -26,6 +27,10 @@ func (r *VarBind) Marshal() string {
 
 type typedValue struct {
 	Value isTypedValue
+}
+
+func (v *typedValue) MarshalJSON() ([]byte, error) {
+	return json.Marshal(v.String())
 }
 
 func (v *typedValue) String() string {

@@ -56,12 +56,10 @@ func (c *Cache) Commit() error {
 }
 
 func (c *Cache) DumpIndex() {
-	out := make([]string, len(c.index))
+	c.RLock()
+	defer c.RUnlock()
 
-	for i, o := range c.index {
-		out[i] = o.String()
-	}
-	y, _ := json.MarshalIndent(out, "", "  ")
+	y, _ := json.MarshalIndent(c.index, "", "  ")
 	fmt.Println(string(y))
 }
 
@@ -69,13 +67,8 @@ func (c *Cache) Dump() {
 	c.RLock()
 	defer c.RUnlock()
 
-	out := make(map[string]interface{})
-	out["staged"] = c.staged
-	out["commited"] = c.committed
-	out["index"] = c.index
-
-	y, _ := json.MarshalIndent(out, "", "  ")
-	fmt.Println(string(y))
+	o, _ := json.MarshalIndent(c.committed, "", "  ")
+	fmt.Println(string(o))
 }
 
 func (c *Cache) Get(oid OID) *VarBind {

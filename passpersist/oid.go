@@ -5,6 +5,7 @@ package passpersist
 import (
 	"bytes"
 	"encoding/asn1"
+	"encoding/json"
 	"fmt"
 	"log/slog"
 	"math"
@@ -42,6 +43,10 @@ func (v OID) Type() string {
 
 func (v OID) Marshal() ([]byte, error) {
 	return asn1.Marshal(v.Value)
+}
+
+func (v OID) MarshalJSON() ([]byte, error) {
+	return json.Marshal(v.String())
 }
 
 // func (v *OID) Unmarshal(b []byte) (rest []byte, err error) {
