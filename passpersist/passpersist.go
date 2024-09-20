@@ -223,12 +223,12 @@ func (p *PassPersist) Run(f func(*PassPersist)) {
 					fmt.Println("NONE")
 				}
 			case "set":
-				fmt.Println(NotWriteable)
-			case "DUMP", "D", "C":
+				fmt.Println(NotWriteable.String())
+			case "DUMP", "C":
 				p.cache.Dump()
-			case "DUMPINDEX", "DI", "I":
+			case "DUMPINDEX", "I":
 				p.cache.DumpIndex()
-			case "DUMPCONFIG", "DO", "O":
+			case "DUMPCONFIG", "O":
 				p.dumpConfig()
 			default:
 				fmt.Println("NONE")
