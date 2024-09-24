@@ -41,7 +41,10 @@ func (c *Cache) Commit() error {
 	c.Lock()
 	defer c.Unlock()
 
+	slog.Debug("commiting cache...")
+
 	c.committed = c.staged
+
 	c.staged = make(map[string]*VarBind)
 
 	idx := make(OIDs, 0, len(c.committed))
@@ -58,7 +61,8 @@ func (c *Cache) Commit() error {
 func (c *Cache) DumpIndex() {
 	c.RLock()
 	defer c.RUnlock()
-
+	slog.Debug("dumping cache index...")
+	slog.Debug("index:", slog.Any("index", c.index))
 	y, _ := json.MarshalIndent(c.index, "", "  ")
 	fmt.Println(string(y))
 }
@@ -114,7 +118,7 @@ func (c *Cache) Set(v *VarBind) error {
 	c.Lock()
 	defer c.Unlock()
 
-	slog.Debug("staging", "oid", v.OID, "type", v.ValueType, "value", v.Value)
+	slog.Debug("staging", slog.Any("value", v))
 
 	c.staged[v.OID.String()] = v
 

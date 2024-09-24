@@ -27,6 +27,17 @@ const (
 	// InconsistentValue
 )
 
+const (
+	AristaExperimentalMib = "1.3.6.1.4.1.30065.4"
+	NetSnmpExtendMib      = "1.3.6.1.4.1.8072.1.3.1"
+	NetPassExamples       = "1.3.6.1.4.1.8072.2.255"
+)
+
+var (
+	DefaultBaseOID     OID           = MustNewOID(AristaExperimentalMib).MustAppend([]int{226})
+	DefaultRefreshRate time.Duration = time.Second * 60
+)
+
 func (e SetError) String() string {
 	switch e {
 	case NotWriteable:
@@ -45,42 +56,66 @@ func (e SetError) String() string {
 	return "unknown-error"
 }
 
-type PassPersist struct {
-	ctx    context.Context
-	cache  *Cache
-	config Config
+type Option func(*PassPersist)
+
+func WithRefresh(d time.Duration) func(*PassPersist) {
+	return func(p *PassPersist) {
+		p.refreshRate = d
+	}
 }
 
-func NewPassPersist(ctx context.Context, opts ...ConfigFunc) *PassPersist {
-	c := NewConfigWithDefaults(ctx)
+func WithBaseOID(o OID) func(*PassPersist) {
+	return func(p *PassPersist) {
+		p.baseOID = o
+	}
+}
+
+type PassPersist struct {
+	cache       *Cache
+	baseOID     OID
+	refreshRate time.Duration
+}
+
+func NewPassPersist(opts ...Option) *PassPersist {
+
+	p := &PassPersist{
+		cache:       NewCache(),
+		baseOID:     DefaultBaseOID,
+		refreshRate: DefaultRefreshRate,
+	}
 
 	for _, fn := range opts {
-		fn(&c)
+		fn(p)
 	}
 
-	return &PassPersist{
-		ctx:    ctx,
-		cache:  NewCache(),
-		config: c,
+	p.overrideFromEnv()
+
+	return p
+}
+
+func (p *PassPersist) overrideFromEnv() {
+	if val, ok := os.LookupEnv("PASSPERSIST_BASE_OID"); ok {
+		if o, err := NewOID(val); err == nil {
+			slog.Info("overriding base OID from env", "was", p.baseOID.String(), "now", o.String())
+			p.baseOID = o
+		}
 	}
-}
 
-func (p *PassPersist) get(oid OID) *VarBind {
-	slog.Debug("getting oid", "oid", oid.String())
-	return p.cache.Get(oid)
-}
-
-func (p *PassPersist) getNext(oid OID) *VarBind {
-	return p.cache.GetNext(oid)
+	if val, ok := os.LookupEnv("PASSPERSIST_REFRESH_RATE"); ok {
+		if r, err := time.ParseDuration(val); err == nil {
+			slog.Info("overriding refresh rate from env", "was", p.refreshRate, "now", r)
+			p.refreshRate = r
+		}
+	}
 }
 
 func (p *PassPersist) AddEntry(subs []int, value typedValue) error {
-	oid, err := p.config.BaseOID.Append(subs)
+	oid, err := p.baseOID.Append(subs)
 	if err != nil {
 		return err
 	}
 
-	slog.Debug("adding entry", "type", value.TypeString(), "oid", oid.String(), "value", value.String())
+	slog.Debug("adding entry", slog.Any("value", value))
 
 	err = p.cache.Set(&VarBind{
 		OID:       oid,
@@ -135,57 +170,12 @@ func (p *PassPersist) AddTimeTicks(subIds []int, value time.Duration) error {
 	return p.AddEntry(subIds, typedValue{&TimeTicksVal{value}})
 }
 
-func (p *PassPersist) dumpConfig() {
-	b, err := json.MarshalIndent(p.config, "", "   ")
-	if err != nil {
-		fmt.Println(err.Error())
-	}
-	fmt.Println(string(b))
-}
-
-func setPrio(prio int) error {
-	var err error
-
-	switch runtime.GOOS {
-	case "linux", "bsd", "freebsd", "netbsd", "openbsd":
-		err = unix.Setpriority(unix.PRIO_PROCESS, 0, prio)
-	}
-
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (p *PassPersist) update(ctx context.Context, callback func(*PassPersist)) {
-
-	err := setPrio(15)
-	if err != nil {
-		slog.Warn("failed to set priority")
-	}
-
-	for {
-		select {
-		case <-ctx.Done():
-			return
-		default:
-			timer := time.NewTimer(p.config.RefreshInterval)
-
-			callback(p)
-			p.cache.Commit()
-
-			<-timer.C
-		}
-	}
-}
-
-func (p *PassPersist) Run(f func(*PassPersist)) {
+func (p *PassPersist) Run(ctx context.Context, f func(*PassPersist)) {
 	input := make(chan string)
 	done := make(chan bool)
 
-	go p.update(p.ctx, f)
-	go watchStdin(p.ctx, input, done)
+	go p.update(ctx, f)
+	go watchStdin(ctx, input, done)
 
 	for {
 		select {
@@ -235,10 +225,67 @@ func (p *PassPersist) Run(f func(*PassPersist)) {
 			}
 		case <-done:
 			return
-		case <-p.ctx.Done():
+		case <-ctx.Done():
 			return
 		}
 	}
+}
+
+func (p *PassPersist) dumpConfig() {
+	b, err := json.MarshalIndent(map[string]any{
+		"base-oid":     p.baseOID,
+		"refresh-rate": p.refreshRate,
+	}, "", "   ")
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+	fmt.Println(string(b))
+}
+
+func setPrio(prio int) error {
+	var err error
+
+	switch runtime.GOOS {
+	case "linux", "bsd", "freebsd", "netbsd", "openbsd":
+		err = unix.Setpriority(unix.PRIO_PROCESS, 0, prio)
+	}
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (p *PassPersist) update(ctx context.Context, callback func(*PassPersist)) {
+
+	err := setPrio(15)
+	if err != nil {
+		slog.Warn("failed to set priority")
+	}
+
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		default:
+			timer := time.NewTimer(p.refreshRate)
+
+			callback(p)
+			p.cache.Commit()
+
+			<-timer.C
+		}
+	}
+}
+
+func (p *PassPersist) get(oid OID) *VarBind {
+	slog.Debug("getting oid", "oid", oid.String())
+	return p.cache.Get(oid)
+}
+
+func (p *PassPersist) getNext(oid OID) *VarBind {
+	return p.cache.GetNext(oid)
 }
 
 func watchStdin(ctx context.Context, input chan<- string, done chan<- bool) {
@@ -276,7 +323,7 @@ func (p *PassPersist) convertAndValidateOID(oid string) (OID, bool) {
 		return OID{}, false
 	}
 
-	if !o.Contains(p.config.BaseOID) {
+	if !o.Contains(p.baseOID) {
 		return o, false
 	}
 
