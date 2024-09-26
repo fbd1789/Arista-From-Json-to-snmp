@@ -58,7 +58,7 @@ func (v *typedValue) String() string {
 	case *TimeTicksVal:
 		return v.GetTimeTicksVal().String()
 	default:
-		slog.Error("unknown value type ", "type", reflect.TypeOf(v.GetValue()).String())
+		slog.Warn("unknown value type ", "type", reflect.TypeOf(v.GetValue()).String())
 	}
 	return ""
 }
@@ -86,7 +86,7 @@ func (v *typedValue) TypeString() string {
 	case *TimeTicksVal:
 		return "TIMETICKS"
 	default:
-		slog.Error("unknown value type", "type", reflect.TypeOf(v.GetValue()).String())
+		slog.Warn("unknown value type", "type", reflect.TypeOf(v.GetValue()).String())
 	}
 	return ""
 }

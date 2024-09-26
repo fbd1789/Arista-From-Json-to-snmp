@@ -38,6 +38,14 @@ var (
 	DefaultRefreshRate time.Duration = time.Second * 60
 )
 
+func init() {
+	l := slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{
+		Level:     slog.LevelError,
+		AddSource: false,
+	}))
+	slog.SetDefault(l)
+}
+
 func (e SetError) String() string {
 	switch e {
 	case NotWriteable:
@@ -51,7 +59,7 @@ func (e SetError) String() string {
 	// case InconsistentValue:
 	// 	return "inconsistent-value"
 	default:
-		slog.Error("unknown value type id", slog.Any("error", e))
+		slog.Warn("unknown value type id", slog.Any("error", e))
 	}
 	return "unknown-error"
 }
@@ -91,22 +99,6 @@ func NewPassPersist(opts ...Option) *PassPersist {
 	p.overrideFromEnv()
 
 	return p
-}
-
-func (p *PassPersist) overrideFromEnv() {
-	if val, ok := os.LookupEnv("PASSPERSIST_BASE_OID"); ok {
-		if o, err := NewOID(val); err == nil {
-			slog.Info("overriding base OID from env", "was", p.baseOID.String(), "now", o.String())
-			p.baseOID = o
-		}
-	}
-
-	if val, ok := os.LookupEnv("PASSPERSIST_REFRESH_RATE"); ok {
-		if r, err := time.ParseDuration(val); err == nil {
-			slog.Info("overriding refresh rate from env", "was", p.refreshRate, "now", r)
-			p.refreshRate = r
-		}
-	}
 }
 
 func (p *PassPersist) AddEntry(subs []int, value typedValue) error {
@@ -220,6 +212,8 @@ func (p *PassPersist) Run(ctx context.Context, f func(*PassPersist)) {
 				p.cache.DumpIndex()
 			case "DUMPCONFIG", "O":
 				p.dumpConfig()
+			case "PANIC":
+				_ = make([]any, 0)[1]
 			default:
 				fmt.Println("NONE")
 			}
@@ -240,6 +234,22 @@ func (p *PassPersist) dumpConfig() {
 		fmt.Println(err.Error())
 	}
 	fmt.Println(string(b))
+}
+
+func (p *PassPersist) overrideFromEnv() {
+	if val, ok := os.LookupEnv("PASSPERSIST_BASE_OID"); ok {
+		if o, err := NewOID(val); err == nil {
+			slog.Info("overriding base OID from env", "was", p.baseOID.String(), "now", o.String())
+			p.baseOID = o
+		}
+	}
+
+	if val, ok := os.LookupEnv("PASSPERSIST_REFRESH_RATE"); ok {
+		if r, err := time.ParseDuration(val); err == nil {
+			slog.Info("overriding refresh rate from env", "was", p.refreshRate, "now", r)
+			p.refreshRate = r
+		}
+	}
 }
 
 func setPrio(prio int) error {
@@ -311,6 +321,7 @@ func watchStdin(ctx context.Context, input chan<- string, done chan<- bool) {
 	if err := scanner.Err(); err != nil {
 		if err != io.EOF {
 			slog.Error("scanner encountered an error", slog.Any("error", err.Error()))
+			os.Exit(1)
 		}
 	}
 }
