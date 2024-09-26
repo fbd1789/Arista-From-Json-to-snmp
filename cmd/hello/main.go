@@ -2,65 +2,55 @@ package main
 
 import (
 	"context"
-	"flag"
-	"fmt"
 	"log/slog"
-	"log/syslog"
-	"os"
-	"runtime"
 	"time"
 
 	"github.com/arista-northwest/go-passpersist/passpersist"
 	"github.com/arista-northwest/go-passpersist/utils"
-	"github.com/arista-northwest/go-passpersist/utils/arista"
 )
 
 var (
 	date    string
 	tag     string
-	version string = "dev"
+	version string
 )
 
 func init() {
-	w, _ := syslog.New(syslog.LOG_LOCAL4, utils.ProgName())
-	l := slog.New(slog.NewTextHandler(w, &slog.HandlerOptions{Level: slog.LevelDebug}))
-	slog.SetDefault(l)
+	//logger.EnableSyslogger(syslog.LOG_LOCAL4, slog.LevelInfo)
 }
 
-func displayVersionAndExit() {
-	fmt.Printf("%s ver %s date %s tag %s [%s/%s]\n", utils.ProgName(), version, date, tag, runtime.GOOS, runtime.GOARCH)
-	os.Exit(0)
-}
+// func redirectStderr(f *os.File) {
+// 	err := syscall.Dup2(int(f.Fd()), int(os.Stderr.Fd()))
+// 	if err != nil {
+// 		log.Fatalf("Failed to redirect stderr to file: %v", err)
+// 	}
+// }
 
 func main() {
-	var ver bool
-	flag.BoolVar(&ver, "v", false, "show version")
-	flag.Parse()
-
-	if ver {
-		displayVersionAndExit()
-	}
+	defer utils.CapPanic()
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	var opts []passpersist.ConfigFunc
+	utils.CommonCLI(version, tag, date)
 
-	b, _ := arista.GetBaseOIDFromSnmpConfig()
+	var opts []passpersist.Option
+
+	b, _ := utils.GetBaseOIDFromSNMPdConfig()
 	if b != nil {
 		opts = append(opts, passpersist.WithBaseOID(*b))
 	}
-	opts = append(opts, passpersist.WithRefreshInterval(time.Second*300))
+	opts = append(opts, passpersist.WithRefresh(time.Second*300))
 
-	pp := passpersist.NewPassPersist(ctx, opts...)
+	pp := passpersist.NewPassPersist(opts...)
 
-	pp.Run(func(pp *passpersist.PassPersist) {
+	pp.Run(ctx, func(pp *passpersist.PassPersist) {
+		slog.Debug("updating...")
 		pp.AddString([]int{0}, "Hello from PassPersist")
 		pp.AddString([]int{1}, "You found a secret message!")
-		slog.Info("added strings...")
 
-		// for i := 2; i <= 10; i++ {
-		// 	for j := 1; j <= 10; j++ {
+		// for i := 2; i <= 2; i++ {
+		// 	for j := 1; j <= 2; j++ {
 		// 		pp.AddString([]int{i, j}, fmt.Sprintf("Value: %d.%d", i, j))
 		// 		slog.Debug("added string", slog.Any("subs", []int{i, j}))
 		// 	}

@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"log/slog"
+	"log/syslog"
 	"net"
 	"net/netip"
 	"os"
@@ -11,45 +12,16 @@ import (
 	"time"
 
 	"github.com/arista-northwest/go-passpersist/passpersist"
+	"github.com/arista-northwest/go-passpersist/utils"
 	"github.com/arista-northwest/go-passpersist/utils/arista"
+	"github.com/arista-northwest/go-passpersist/utils/logger"
 )
 
-// func EosCommand(command string) (string, error) {
-// 	c := cmd.NewCmd("Cli", "-p15", "-c", command)
-// 	c.Env = append(c.Env, "TERM=dumb")
-// 	<-c.Start()
-
-// 	stderr := c.Status().Stderr
-// 	if len(stderr) > 0 {
-// 		return "", fmt.Errorf("%s", strings.Join(stderr, "\n"))
-// 	}
-// 	return strings.Join(c.Status().Stdout, "\n"), nil
-// }
-
-/*
-{
-    "imageFormatVersion": "1.0",
-    "cEosToolsVersion": "1.1",
-    "uptime": 28197.233053922653,
-    "modelName": "cEOSLab",
-    "kernelVersion": "5.15.0-57-generic",
-    "internalVersion": "4.28.1F-27567444.4281F",
-    "memTotal": 65434204,
-    "mfgName": "Arista",
-    "serialNumber": "CB7F119E346534EA0F614DE32E9B463D",
-    "systemMacAddress": "00:1c:73:2b:1f:9e",
-    "bootupTimestamp": 1673459277.0984712,
-    "memFree": 59489948,
-    "version": "4.28.1F-27567444.4281F (engineering build)",
-    "configMacAddress": "00:00:00:00:00:00",
-    "isIntlVersion": false,
-    "imageOptimization": "None",
-    "internalBuildId": "aa54565c-ad3f-47c8-95a6-9b82f8bf7ad3",
-    "hardwareRevision": "",
-    "hwMacAddress": "00:00:00:00:00:00",
-    "architecture": "i686"
-}
-*/
+var (
+	date    string
+	tag     string
+	version string
+)
 
 type MACAddress struct {
 	net.HardwareAddr
@@ -120,25 +92,24 @@ type ShowVersion struct {
 }
 
 func init() {
-	//w, _ := syslog.New(syslog.LOG_LOCAL4, filepath.Base(os.Args[0]))
-	w := os.Stdout
-	l := slog.New(slog.NewTextHandler(w, &slog.HandlerOptions{Level: slog.LevelDebug}))
-	slog.SetDefault(l)
+	logger.EnableSyslogger(syslog.LOG_LOCAL4, slog.LevelInfo)
 }
 
 func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	var opts []passpersist.ConfigFunc
-	baseOID, _ := arista.GetBaseOIDFromSnmpConfig()
+	utils.CommonCLI(version, tag, date)
+
+	var opts []passpersist.Option
+	baseOID, _ := utils.GetBaseOIDFromSNMPdConfig()
 	if baseOID != nil {
 		opts = append(opts, passpersist.WithBaseOID(*baseOID))
 	}
 
-	pp := passpersist.NewPassPersist(ctx, opts...)
+	pp := passpersist.NewPassPersist(opts...)
 
-	pp.Run(func(pp *passpersist.PassPersist) {
+	pp.Run(ctx, func(pp *passpersist.PassPersist) {
 		var data ShowVersion
 		err := arista.EosCommandJson("show version", data)
 		if err != nil {

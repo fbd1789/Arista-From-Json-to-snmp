@@ -5,15 +5,21 @@ import (
 	"fmt"
 	"log/slog"
 	"log/syslog"
-	"os"
-	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/arista-northwest/go-passpersist/passpersist"
+	"github.com/arista-northwest/go-passpersist/utils"
 	"github.com/arista-northwest/go-passpersist/utils/arista"
+	"github.com/arista-northwest/go-passpersist/utils/logger"
+)
+
+var (
+	date    string
+	tag     string
+	version string
 )
 
 type InterfaceQueueCounters struct {
@@ -41,27 +47,28 @@ func getTrafficClassIndex(s string) int {
 	idx, _ := strconv.Atoi(m[1])
 	return idx
 }
+
+func init() {
+	logger.EnableSyslogger(syslog.LOG_LOCAL4, slog.LevelInfo)
+}
+
 func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	// global settings
-	//passpersist.BaseOID, _ = passpersist.MustNewOID(passpersist.AristaExperimentalMib).Append([]int{224})
-	w, _ := syslog.New(syslog.LOG_LOCAL4, filepath.Base(os.Args[0]))
-	l := slog.New(slog.NewTextHandler(w, &slog.HandlerOptions{Level: slog.LevelDebug}))
-	slog.SetDefault(l)
+	utils.CommonCLI(version, tag, date)
 
-	var opts []passpersist.ConfigFunc
+	var opts []passpersist.Option
 
-	b, _ := arista.GetBaseOIDFromSnmpConfig()
+	b, _ := utils.GetBaseOIDFromSNMPdConfig()
 	if b != nil {
 		opts = append(opts, passpersist.WithBaseOID(*b))
 	}
-	opts = append(opts, passpersist.WithRefreshInterval(time.Second*60))
+	opts = append(opts, passpersist.WithRefresh(time.Second*60))
 
-	pp := passpersist.NewPassPersist(ctx, opts...)
+	pp := passpersist.NewPassPersist(opts...)
 
-	pp.Run(func(pp *passpersist.PassPersist) {
+	pp.Run(ctx, func(pp *passpersist.PassPersist) {
 		var data InterfaceQueueCounters
 		idxs, err := arista.GetIfIndexeMap()
 		if err != nil {

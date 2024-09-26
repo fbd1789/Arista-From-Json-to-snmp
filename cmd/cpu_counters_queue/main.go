@@ -42,14 +42,20 @@ import (
 	"context"
 	"log/slog"
 	"log/syslog"
-	"os"
-	"path/filepath"
 	"regexp"
 	"strconv"
 	"time"
 
 	"github.com/arista-northwest/go-passpersist/passpersist"
+	"github.com/arista-northwest/go-passpersist/utils"
 	"github.com/arista-northwest/go-passpersist/utils/arista"
+	"github.com/arista-northwest/go-passpersist/utils/logger"
+)
+
+var (
+	date    string
+	tag     string
+	version string
 )
 
 // var mockData []byte = []byte(`{
@@ -717,28 +723,28 @@ type CpuPortQueueCounters struct {
 }
 
 func init() {
-	w, _ := syslog.New(syslog.LOG_LOCAL4, filepath.Base(os.Args[0]))
-	l := slog.New(slog.NewTextHandler(w, &slog.HandlerOptions{Level: slog.LevelDebug}))
-	slog.SetDefault(l)
+	logger.EnableSyslogger(syslog.LOG_LOCAL4, slog.LevelInfo)
 }
 
 func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
+	utils.CommonCLI(version, tag, date)
+
 	var data CpuCountersQueueSummary
 
-	var opts []passpersist.ConfigFunc
+	var opts []passpersist.Option
 
-	b, _ := arista.GetBaseOIDFromSnmpConfig()
-	if b != nil {
+	b, err := utils.GetBaseOIDFromSNMPdConfig()
+	if err != nil {
 		opts = append(opts, passpersist.WithBaseOID(*b))
 	}
-	opts = append(opts, passpersist.WithRefreshInterval(time.Second*30))
+	opts = append(opts, passpersist.WithRefresh(time.Second*30))
 
-	pp := passpersist.NewPassPersist(ctx, opts...)
+	pp := passpersist.NewPassPersist(opts...)
 
-	pp.Run(func(pp *passpersist.PassPersist) {
+	pp.Run(ctx, func(pp *passpersist.PassPersist) {
 		// if err := json.Unmarshal(mockData, &data); err != nil {
 		// 	panic(err)
 		// }
