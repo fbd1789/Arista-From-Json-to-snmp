@@ -124,7 +124,7 @@ func (c *Cache) Set(v *VarBind) error {
 	c.Lock()
 	defer c.Unlock()
 
-	slog.Debug("staging", slog.Any("value", v))
+	slog.Debug("staging", slog.Any("value", v.Marshal()))
 
 	c.staged[v.OID.String()] = v
 
