@@ -60,6 +60,53 @@ import (
 //             }
 //         }
 // 	},
+// 	"egrInterfaces": {
+//         "Ethernet34/1.1054": {
+//             "profileName": "data-plane-policer",
+//             "mode": "committed",
+//             "counters": {
+//                 "conformedPackets": 13661252,
+//                 "conformedBytes": 14112073316,
+//                 "yellowPackets": 0,
+//                 "yellowBytes": 0,
+//                 "exceededPackets": 0,
+//                 "exceededBytes": 0,
+//                 "droppedBitsRate": 0.0,
+//                 "conformedBitsRate": 0.0,
+//                 "exceededBitsRate": 0.0
+//             }
+//         },
+// 		"Ethernet48/1.1713": {
+//             "profileName": "data-plane-policer",
+//             "mode": "committed",
+//             "counters": {
+//                 "conformedPackets": 195605440,
+//                 "conformedBytes": 196648674880,
+//                 "yellowPackets": 0,
+//                 "yellowBytes": 0,
+//                 "exceededPackets": 0,
+//                 "exceededBytes": 0,
+//                 "droppedBitsRate": 0.0,
+//                 "conformedBitsRate": 0.0,
+//                 "exceededBitsRate": 0.0
+//             }
+//         },
+//         "Ethernet48/1.1837": {
+//             "profileName": "data-plane-policer",
+//             "mode": "committed",
+//             "counters": {
+//                 "conformedPackets": 195604320,
+//                 "conformedBytes": 196647547040,
+//                 "yellowPackets": 0,
+//                 "yellowBytes": 0,
+//                 "exceededPackets": 0,
+//                 "exceededBytes": 0,
+//                 "droppedBitsRate": 0.0,
+//                 "conformedBitsRate": 0.0,
+//                 "exceededBitsRate": 0.0
+//             }
+//         }
+// 	},
 //     "cpuInterfaces": {}
 // }`)
 
@@ -67,6 +114,9 @@ import (
 // 	"Ethernet48/1.1792": 4811792,
 // 	"Ethernet48/1.1758": 4811758,
 // 	"Ethernet48/1.1588": 4811588,
+// 	"Ethernet34/1.1054": 4811643,
+// 	"Ethernet48/1.1713": 4811678,
+// 	"Ethernet48/1.1837": 4811323,
 // }
 
 var (
@@ -76,7 +126,8 @@ var (
 )
 
 type PolicingInterfaceCounters struct {
-	Interfaces map[string]Interface
+	Interfaces    map[string]Interface
+	EgrInterfaces map[string]Interface
 }
 
 type Interface struct {
@@ -150,8 +201,27 @@ func main() {
 			pp.AddCounter64([]int{1, 1, 7, idx}, profile.Counters.YellowBytes)
 			pp.AddCounter64([]int{1, 1, 8, idx}, profile.Counters.ExceededPackets)
 			pp.AddCounter64([]int{1, 1, 9, idx}, profile.Counters.ExceededBytes)
-			// pp.AddOctetString([]int{1, 1, 9, idx}, Float64ToBytes(profile.Counters.ConformedBitsRate))
-			// pp.AddOctetString([]int{1, 1, 10, idx}, Float64ToBytes(profile.Counters.ExceededBitsRate))
+		}
+
+		for intf, profile := range data.EgrInterfaces {
+			idx, ok := ifIndexMap[intf]
+			if !ok {
+				slog.Warn("no index found", "interface", intf)
+				continue
+			}
+
+			pp.AddString([]int{2, 1, 1, idx}, intf)
+			pp.AddString([]int{2, 1, 2, idx}, profile.ProfileName)
+			pp.AddString([]int{2, 1, 3, idx}, profile.Mode)
+			pp.AddCounter64([]int{2, 1, 4, idx}, profile.Counters.ConformedPackets)
+			pp.AddCounter64([]int{2, 1, 5, idx}, profile.Counters.ConformedBytes)
+			pp.AddCounter64([]int{2, 1, 6, idx}, profile.Counters.YellowPackets)
+			pp.AddCounter64([]int{2, 1, 7, idx}, profile.Counters.YellowBytes)
+			pp.AddCounter64([]int{2, 1, 8, idx}, profile.Counters.ExceededPackets)
+			pp.AddCounter64([]int{2, 1, 9, idx}, profile.Counters.ExceededBytes)
 		}
 	})
 }
+
+// func addEntries(name string, idx int, p Interface) {
+// }
