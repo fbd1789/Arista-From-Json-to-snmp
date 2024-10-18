@@ -48,12 +48,5 @@ func main() {
 		slog.Debug("updating...")
 		pp.AddString([]int{0}, "Hello from PassPersist")
 		pp.AddString([]int{1}, "You found a secret message!")
-
-		// for i := 2; i <= 2; i++ {
-		// 	for j := 1; j <= 2; j++ {
-		// 		pp.AddString([]int{i, j}, fmt.Sprintf("Value: %d.%d", i, j))
-		// 		slog.Debug("added string", slog.Any("subs", []int{i, j}))
-		// 	}
-		// }
 	})
 }
