@@ -72,6 +72,11 @@ func main() {
 			return
 		}
 		index :=1
+		pp.AddString([]int{index}, "globalCounters")
+		pp.AddCounter64([]int{index,  1}, uint64(data.GlobalCounters.AllRequests.Received))	
+		pp.AddCounter64([]int{index,  2}, uint64(data.GlobalCounters.AllRequests.Forwarded))
+		pp.AddCounter64([]int{index,  3}, uint64(data.GlobalCounters.AllRequests.Dropped))
+		index ++	
 		for iface, stats := range data.InterfaceCounters{
 			pp.AddString([]int{index}, iface)
 			pp.AddCounter64([]int{index, 1}, uint64(stats.Requests.Received))
