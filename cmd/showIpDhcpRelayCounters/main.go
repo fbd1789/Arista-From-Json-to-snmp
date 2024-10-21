@@ -67,7 +67,7 @@ func main() {
 
 	pp.Run(ctx, func(pp *passpersist.PassPersist) {
 		slog.Debug("show vrf...")
-		if err := arista.EosCommandJson("show vrf", &data); err != nil {
+		if err := arista.EosCommandJson("show ip dhcp relay counters", &data); err != nil {
 			slog.Error("failed to run eos command", slog.Any("error", err))
 			return
 		}
